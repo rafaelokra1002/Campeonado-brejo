@@ -1,0 +1,120 @@
+// Schema do Campeonato Brejolandense
+// Banco: SQLite (MVP). Para Postgres, troque provider para "postgresql".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  shortName String
+  crest     String? // URL do escudo (ou emoji/inicial)
+  city      String?
+  founded   Int?
+  color     String   @default("#22c55e")
+  group     String   @default("A") // Grupo A ou B
+  createdAt DateTime @default(now())
+
+  players    Player[]
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+  goals       Goal[]
+  cards       Card[]
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  number    Int?
+  position  String? // Goleiro, Zagueiro, Meia, Atacante...
+  photo     String? // foto do jogador (upload via /api/upload)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  goals Goal[]
+  cards Card[]
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  round      Int // rodada
+  homeTeamId String
+  awayTeamId String
+  homeTeam   Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam   Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeScore  Int      @default(0)
+  awayScore  Int      @default(0)
+  status     String   @default("SCHEDULED") // SCHEDULED | LIVE | FINISHED
+  kickoff    DateTime
+  venue      String?
+  minute     Int? // minuto atual quando LIVE
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  goals Goal[]
+  cards Card[]
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  playerId  String?
+  player    Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  minute    Int?
+  ownGoal   Boolean  @default(false)
+  penalty   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  playerId  String?
+  player    Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  type      String   @default("YELLOW") // YELLOW | RED
+  minute    Int?
+  createdAt DateTime @default(now())
+}
+
+// Banner de propaganda/patrocinador exibido em um "slot" (posição) do site.
+model Ad {
+  id        String   @id @default(cuid())
+  title     String // nome do anunciante, para identificar no admin
+  imageUrl  String // banner (upload via /api/upload ou URL externa)
+  linkUrl   String? // para onde o clique leva (opcional)
+  slot      String   @default("home-top") // onde aparece: home-top, home-bottom...
+  active    Boolean  @default(true)
+  order     Int      @default(0) // ordem quando há vários anúncios no mesmo slot
+  createdAt DateTime @default(now())
+}
+
+// Configuração geral do site (linha única). Banner de capa da home,
+// organizador e contador de seguidores do campeonato.
+model Settings {
+  id            String  @id @default("main")
+  organizerName String  @default("")
+  bannerImage   String? // foto de capa da home (upload via /api/upload)
+  followers     Int     @default(0)
+}

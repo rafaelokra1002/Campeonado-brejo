@@ -1,0 +1,143 @@
+import { prisma } from "../lib/prisma.js";
+
+// Calcula a tabela de classificação a partir das partidas finalizadas.
+export async function computeStandings() {
+  const teams = await prisma.team.findMany();
+  const matches = await prisma.match.findMany({
+    where: { status: "FINISHED" },
+  });
+
+  const table = new Map();
+  for (const t of teams) {
+    table.set(t.id, {
+      teamId: t.id,
+      name: t.name,
+      shortName: t.shortName,
+      crest: t.crest,
+      color: t.color,
+      group: t.group,
+      points: 0,
+      played: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDiff: 0,
+      form: [], // últimos resultados: V/E/D
+    });
+  }
+
+  for (const m of matches) {
+    const home = table.get(m.homeTeamId);
+    const away = table.get(m.awayTeamId);
+    if (!home || !away) continue;
+
+    home.played++;
+    away.played++;
+    home.goalsFor += m.homeScore;
+    home.goalsAgainst += m.awayScore;
+    away.goalsFor += m.awayScore;
+    away.goalsAgainst += m.homeScore;
+
+    if (m.homeScore > m.awayScore) {
+      home.points += 3;
+      home.wins++;
+      away.losses++;
+      home.form.push("V");
+      away.form.push("D");
+    } else if (m.homeScore < m.awayScore) {
+      away.points += 3;
+      away.wins++;
+      home.losses++;
+      away.form.push("V");
+      home.form.push("D");
+    } else {
+      home.points++;
+      away.points++;
+      home.draws++;
+      away.draws++;
+      home.form.push("E");
+      away.form.push("E");
+    }
+  }
+
+  const standings = [...table.values()].map((row) => ({
+    ...row,
+    goalDiff: row.goalsFor - row.goalsAgainst,
+    form: row.form.slice(-5),
+  }));
+
+  // Critérios: pontos > saldo > gols pró > vitórias > nome
+  const byRank = (a, b) =>
+    b.points - a.points ||
+    b.goalDiff - a.goalDiff ||
+    b.goalsFor - a.goalsFor ||
+    b.wins - a.wins ||
+    a.name.localeCompare(b.name);
+
+  // Ordena e numera a posição DENTRO de cada grupo.
+  const groups = new Map();
+  for (const row of standings) {
+    if (!groups.has(row.group)) groups.set(row.group, []);
+    groups.get(row.group).push(row);
+  }
+
+  const result = [];
+  for (const key of [...groups.keys()].sort()) {
+    const rows = groups.get(key).sort(byRank).map((row, i) => ({ ...row, position: i + 1 }));
+    result.push(...rows);
+  }
+  return result;
+}
+
+// Classificação agrupada: { A: [...], B: [...] }
+export async function computeStandingsByGroup() {
+  const flat = await computeStandings();
+  const grouped = {};
+  for (const row of flat) {
+    (grouped[row.group] ||= []).push(row);
+  }
+  return grouped;
+}
+
+// Ranking de artilheiros (gols que não são contra).
+export async function computeScorers() {
+  const goals = await prisma.goal.findMany({
+    where: { ownGoal: false, playerId: { not: null } },
+    include: {
+      player: true,
+      team: { select: { id: true, name: true, shortName: true, crest: true, color: true } },
+    },
+  });
+
+  const map = new Map();
+  for (const g of goals) {
+    if (!g.player) continue;
+    const key = g.playerId;
+    if (!map.has(key)) {
+      map.set(key, {
+        playerId: g.playerId,
+        name: g.player.name,
+        number: g.player.number,
+        team: g.team,
+        goals: 0,
+        penalties: 0,
+      });
+    }
+    const entry = map.get(key);
+    entry.goals++;
+    if (g.penalty) entry.penalties++;
+  }
+
+  return [...map.values()]
+    .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+    .map((row, i) => ({ ...row, rank: i + 1 }));
+}
+
+// Estatísticas agregadas de um time.
+export async function teamStats(teamId) {
+  const standings = await computeStandings();
+  const row = standings.find((s) => s.teamId === teamId);
+  return row || null;
+}
