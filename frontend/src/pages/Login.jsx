@@ -48,11 +48,6 @@ export default function Login() {
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
-
-      <p className="text-center text-xs text-gray-600 mt-4">
-        Credenciais padrão (seed): <br />
-        <code className="text-gray-400">admin@brejolandense.com</code> / <code className="text-gray-400">admin123</code>
-      </p>
     </div>
   );
 }
