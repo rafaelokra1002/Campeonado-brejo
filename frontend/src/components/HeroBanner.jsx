@@ -35,8 +35,9 @@ export default function HeroBanner() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-3xl border border-white/10 min-h-[220px] sm:min-h-[280px] flex flex-col justify-between bg-cover bg-center"
+      className="relative overflow-hidden rounded-3xl border border-white/10 min-h-[220px] sm:min-h-[280px] flex flex-col justify-between bg-contain bg-center bg-no-repeat"
       style={{
+        backgroundColor: "#0a0f1a",
         backgroundImage: bannerUrl
           ? `linear-gradient(to top, rgba(10,15,26,0.92), rgba(10,15,26,0.15) 55%), url(${bannerUrl})`
           : undefined,
