@@ -17,6 +17,33 @@ export const STATUS = {
   FINISHED: { label: "Encerrado", color: "text-brand-400 bg-brand/10" },
 };
 
+// Converte um link "normal" do YouTube (watch, youtu.be, live, shorts) na URL
+// de embed usada no <iframe>. Retorna null se não conseguir reconhecer um ID.
+export function youtubeEmbedUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url.trim());
+    const host = u.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = u.pathname.slice(1);
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      if (u.pathname === "/watch") {
+        const id = u.searchParams.get("v");
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      const match = u.pathname.match(/^\/(embed|live|shorts)\/([^/?]+)/);
+      if (match) return `https://www.youtube.com/embed/${match[2]}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 // Compartilhar resultado no WhatsApp
 export function shareWhatsApp(match) {
   const line = `⚽ ${match.homeTeam.shortName} ${match.homeScore} x ${match.awayScore} ${match.awayTeam.shortName}`;

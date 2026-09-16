@@ -12,7 +12,7 @@ export default function SettingsAdmin() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    api.settings().then((s) => setForm({ organizerName: s.organizerName || "", bannerImage: s.bannerImage || "" }));
+    api.settings().then((s) => setForm({ organizerName: s.organizerName || "", bannerImage: s.bannerImage || "", streamUrl: s.streamUrl || "" }));
   }, []);
 
   async function handleFile(e) {
@@ -74,6 +74,20 @@ export default function SettingsAdmin() {
           onChange={(e) => setForm({ ...form, organizerName: e.target.value })}
           placeholder="Ex: Uermerson Costa"
         />
+      </div>
+
+      <div>
+        <h2 className="font-bold mb-1 mt-2">Transmissão ao vivo</h2>
+        <label className="label">Link do YouTube (vídeo ou live)</label>
+        <input
+          className="input"
+          value={form.streamUrl}
+          onChange={(e) => setForm({ ...form, streamUrl: e.target.value })}
+          placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+        />
+        <p className="text-xs text-gray-500 mt-1.5">
+          Cole o link do vídeo/live do YouTube. Deixe em branco pra esconder essa parte do site.
+        </p>
       </div>
 
       <button onClick={save} className="btn-primary" disabled={saving}>{saving ? "Salvando..." : "Salvar configurações"}</button>

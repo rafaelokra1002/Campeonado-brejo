@@ -6,6 +6,7 @@ import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
 import HeroBanner from "../components/HeroBanner.jsx";
+import LiveStream from "../components/LiveStream.jsx";
 
 export default function Home() {
   const { data, loading } = usePolling(() => api.dashboard(), { interval: 15000 });
@@ -19,6 +20,8 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <HeroBanner />
+
+      <LiveStream />
 
       {/* Faixa de estatísticas + rodada atual */}
       <section className="flex flex-wrap items-center justify-between gap-4 card px-5 py-4">

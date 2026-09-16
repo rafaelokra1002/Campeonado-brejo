@@ -11,7 +11,7 @@ const TABS = [
   { key: "teams", label: "🛡️ Times", Comp: TeamsAdmin },
   { key: "players", label: "👥 Jogadores", Comp: PlayersAdmin },
   { key: "ads", label: "📢 Propagandas", Comp: AdsAdmin },
-  { key: "settings", label: "🎨 Capa da Home", Comp: SettingsAdmin },
+  { key: "settings", label: "🎨 Site", Comp: SettingsAdmin },
 ];
 
 export default function Admin() {

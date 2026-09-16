@@ -1,12 +1,15 @@
 // Schema do Campeonato Brejolandense
-// Banco: SQLite (MVP). Para Postgres, troque provider para "postgresql".
+// Banco: PostgreSQL (Neon).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" cobre o dev (Windows); os outros dois cobrem os binários mais
+  // comuns de containers Linux usados em produção (ex: Coolify).
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -117,4 +120,5 @@ model Settings {
   organizerName String  @default("")
   bannerImage   String? // foto de capa da home (upload via /api/upload)
   followers     Int     @default(0)
+  streamUrl     String? // link da transmissão ao vivo no YouTube
 }
