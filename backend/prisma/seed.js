@@ -40,9 +40,9 @@ const MATCHES = [
   { round: 2, home: "Vila Nova", away: "Tropa", hs: 3, as: 1, date: "2026-09-06", time: "17:00" },
   { round: 2, home: "Campinense", away: "Brejo City", hs: 1, as: 1, date: "2026-09-06", time: "17:00" },
   { round: 2, home: "Poço de Baixo", away: "Ponta D'Água", hs: 0, as: 4, date: "2026-09-06", time: "17:00" },
-  { round: 2, home: "Panelinha", away: "União Jacaré", scheduled: true, date: "2026-09-12", time: "17:00" },
-  { round: 2, home: "Sertãozinho", away: "Santa Paz", scheduled: true, date: "2026-09-13", time: "17:00" },
-  { round: 2, home: "Serrolândia", away: "Mombaça", scheduled: true, date: "2026-09-14", time: "17:30" },
+  { round: 2, home: "Panelinha", away: "União Jacaré", hs: 0, as: 6, date: "2026-09-12", time: "17:00" },
+  { round: 2, home: "Sertãozinho", away: "Santa Paz", hs: 1, as: 0, date: "2026-09-13", time: "17:00" },
+  { round: 2, home: "Serrolândia", away: "Mombaça", hs: 1, as: 5, date: "2026-09-14", time: "17:30" },
 
   // ---- Rodada 3 (19-28/09, agendada) ----
   { round: 3, home: "Poço de Baixo", away: "Campinense", scheduled: true, date: "2026-09-19", time: "17:00" },

@@ -81,7 +81,7 @@ export default function Home() {
           {groups.map((g) => (
             <div key={g}>
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Grupo {g}</h3>
-              <StandingsTable rows={standingsByGroup[g]} compact promotion={2} />
+              <StandingsTable rows={standingsByGroup[g]} compact promotion={4} />
             </div>
           ))}
         </div>
