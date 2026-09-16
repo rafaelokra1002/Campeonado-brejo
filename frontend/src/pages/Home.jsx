@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling.js";
+import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
 import MatchCard from "../components/MatchCard.jsx";
@@ -22,6 +23,8 @@ export default function Home() {
       <HeroBanner />
 
       <LiveStream />
+
+      <MyTeamSection />
 
       {/* Faixa de estatísticas + rodada atual */}
       <section className="flex flex-wrap items-center justify-between gap-4 card px-5 py-4">
@@ -94,7 +97,7 @@ export default function Home() {
         </SectionTitle>
         <div className="card divide-y divide-white/5">
           {topScorers.length ? topScorers.map((s) => (
-            <Link key={s.playerId} to={`/times/${s.team.id}`} className="flex items-center gap-3 p-3 hover:bg-white/5 transition">
+            <Link key={s.playerId} to={`/jogadores/${s.playerId}`} className="flex items-center gap-3 p-3 hover:bg-white/5 transition">
               <span className="w-6 text-center font-black text-gray-500">{s.rank}</span>
               <TeamBadge team={s.team} size={32} />
               <div className="flex-1 min-w-0">
@@ -112,6 +115,67 @@ export default function Home() {
 
       <AdBanner slot="home-bottom" />
     </div>
+  );
+}
+
+function MyTeamSection() {
+  const [favoriteId] = useFavoriteTeam();
+  const { data: team } = usePolling(() => (favoriteId ? api.team(favoriteId) : Promise.resolve(null)), {
+    interval: favoriteId ? 20000 : 0,
+    deps: [favoriteId],
+  });
+
+  if (!favoriteId) {
+    return (
+      <Link to="/times" className="card p-4 flex items-center justify-between gap-3 hover:border-brand/40 transition">
+        <span className="text-sm text-gray-300">⭐ Escolha seu time do coração pra acompanhar ele aqui</span>
+        <span className="text-brand-400 font-semibold text-sm whitespace-nowrap">Escolher →</span>
+      </Link>
+    );
+  }
+
+  if (!team) return null;
+
+  const nextMatch = team.matches.find((m) => m.status !== "FINISHED");
+  const lastMatch = [...team.matches].reverse().find((m) => m.status === "FINISHED");
+
+  return (
+    <section>
+      <SectionTitle action={<Link to={`/times/${team.id}`} className="text-sm text-brand-400 font-semibold">Ver time</Link>}>
+        ⭐ Meu time
+      </SectionTitle>
+      <div className="card p-4 flex flex-wrap items-center gap-4">
+        <Link to={`/times/${team.id}`} className="flex items-center gap-3">
+          <TeamBadge team={team} size={48} />
+          <div>
+            <div className="font-bold">{team.name}</div>
+            {team.stats && (
+              <div className="text-xs text-gray-500">
+                Grupo {team.group} · {team.stats.position}º lugar · {team.stats.points} pts
+              </div>
+            )}
+          </div>
+        </Link>
+        <div className="flex-1 min-w-[200px] grid sm:grid-cols-2 gap-2">
+          {nextMatch && (
+            <Link to={`/jogos/${nextMatch.id}`} className="rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wide">Próximo jogo</div>
+              <div className="text-sm font-semibold truncate">
+                {nextMatch.homeTeam.shortName} × {nextMatch.awayTeam.shortName}
+              </div>
+            </Link>
+          )}
+          {lastMatch && (
+            <Link to={`/jogos/${lastMatch.id}`} className="rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wide">Último resultado</div>
+              <div className="text-sm font-semibold truncate">
+                {lastMatch.homeTeam.shortName} {lastMatch.homeScore} × {lastMatch.awayScore} {lastMatch.awayTeam.shortName}
+              </div>
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -67,6 +67,9 @@ model Match {
   kickoff    DateTime
   venue      String?
   minute     Int? // minuto atual quando LIVE
+  votesHome  Int      @default(0) // enquete "quem vence": palpites no time da casa
+  votesDraw  Int      @default(0)
+  votesAway  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

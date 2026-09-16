@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { asyncHandler } from "../middleware/error.js";
-import { computeStandings, computeStandingsByGroup, computeScorers } from "../services/stats.service.js";
+import { computeStandings, computeStandingsByGroup, computeScorers, computeCardsRanking } from "../services/stats.service.js";
 
 export const standings = asyncHandler(async (req, res) => {
   // ?grouped=1 retorna { A: [...], B: [...] }
@@ -10,6 +10,10 @@ export const standings = asyncHandler(async (req, res) => {
 
 export const scorers = asyncHandler(async (_req, res) => {
   res.json(await computeScorers());
+});
+
+export const cardsRanking = asyncHandler(async (_req, res) => {
+  res.json(await computeCardsRanking());
 });
 
 // Dados agregados para o dashboard da home.

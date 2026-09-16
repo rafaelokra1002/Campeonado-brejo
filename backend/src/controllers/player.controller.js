@@ -20,6 +20,29 @@ export const list = asyncHandler(async (req, res) => {
   res.json(players);
 });
 
+export const getOne = asyncHandler(async (req, res) => {
+  const player = await prisma.player.findUnique({
+    where: { id: req.params.id },
+    include: { team: { select: { id: true, name: true, shortName: true, crest: true, color: true } } },
+  });
+  if (!player) return res.status(404).json({ error: "Jogador não encontrado." });
+
+  const [goals, cards] = await Promise.all([
+    prisma.goal.findMany({ where: { playerId: player.id } }),
+    prisma.card.findMany({ where: { playerId: player.id } }),
+  ]);
+
+  const stats = {
+    goals: goals.filter((g) => !g.ownGoal).length,
+    ownGoals: goals.filter((g) => g.ownGoal).length,
+    penalties: goals.filter((g) => g.penalty).length,
+    yellow: cards.filter((c) => c.type === "YELLOW").length,
+    red: cards.filter((c) => c.type === "RED").length,
+  };
+
+  res.json({ ...player, stats });
+});
+
 export const create = asyncHandler(async (req, res) => {
   const data = playerSchema.parse(req.body);
   const player = await prisma.player.create({ data });

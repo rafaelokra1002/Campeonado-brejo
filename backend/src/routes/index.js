@@ -21,15 +21,18 @@ router.get("/auth/me", requireAuth, auth.me);
 router.get("/dashboard", stats.dashboard);
 router.get("/standings", stats.standings);
 router.get("/scorers", stats.scorers);
+router.get("/cards-ranking", stats.cardsRanking);
 
 router.get("/teams", teams.list);
 router.get("/teams/:id", teams.getOne);
 
 router.get("/players", players.list);
+router.get("/players/:id", players.getOne);
 
 router.get("/matches", matches.list);
 router.get("/matches/rounds", matches.rounds);
 router.get("/matches/:id", matches.getOne);
+router.post("/matches/:id/vote", matches.vote);
 
 router.get("/ads", ads.list);
 

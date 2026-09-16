@@ -62,7 +62,23 @@ export const getOne = asyncHandler(async (req, res) => {
     include: detailInclude,
   });
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
-  res.json(match);
+
+  // Confronto direto: últimos jogos entre esses dois times, em qualquer ordem de mando.
+  const headToHead = await prisma.match.findMany({
+    where: {
+      id: { not: match.id },
+      status: "FINISHED",
+      OR: [
+        { homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId },
+        { homeTeamId: match.awayTeamId, awayTeamId: match.homeTeamId },
+      ],
+    },
+    include: matchInclude,
+    orderBy: { kickoff: "desc" },
+    take: 5,
+  });
+
+  res.json({ ...match, headToHead });
 });
 
 export const create = asyncHandler(async (req, res) => {
@@ -105,6 +121,26 @@ export const updateScore = asyncHandler(async (req, res) => {
     include: detailInclude,
   });
   res.json(match);
+});
+
+// ---- Enquete "quem vence" ----
+const voteSchema = z.object({ choice: z.enum(["HOME", "DRAW", "AWAY"]) });
+
+export const vote = asyncHandler(async (req, res) => {
+  const { choice } = voteSchema.parse(req.body);
+  const match = await prisma.match.findUnique({ where: { id: req.params.id } });
+  if (!match) return res.status(404).json({ error: "Partida não encontrada." });
+  if (match.status !== "SCHEDULED") {
+    return res.status(400).json({ error: "A votação encerra quando a partida começa." });
+  }
+
+  const field = choice === "HOME" ? "votesHome" : choice === "AWAY" ? "votesAway" : "votesDraw";
+  const updated = await prisma.match.update({
+    where: { id: req.params.id },
+    data: { [field]: { increment: 1 } },
+    include: matchInclude,
+  });
+  res.json(updated);
 });
 
 // ---- Gols ----

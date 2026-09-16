@@ -135,6 +135,41 @@ export async function computeScorers() {
     .map((row, i) => ({ ...row, rank: i + 1 }));
 }
 
+// Ranking de cartões (amarelo + vermelho) por jogador.
+export async function computeCardsRanking() {
+  const cards = await prisma.card.findMany({
+    where: { playerId: { not: null } },
+    include: {
+      player: true,
+      team: { select: { id: true, name: true, shortName: true, crest: true, color: true } },
+    },
+  });
+
+  const map = new Map();
+  for (const c of cards) {
+    if (!c.player) continue;
+    const key = c.playerId;
+    if (!map.has(key)) {
+      map.set(key, {
+        playerId: c.playerId,
+        name: c.player.name,
+        number: c.player.number,
+        team: c.team,
+        yellow: 0,
+        red: 0,
+      });
+    }
+    const entry = map.get(key);
+    if (c.type === "RED") entry.red++;
+    else entry.yellow++;
+  }
+
+  return [...map.values()]
+    .map((row) => ({ ...row, total: row.yellow + row.red }))
+    .sort((a, b) => b.total - a.total || b.red - a.red || a.name.localeCompare(b.name))
+    .map((row, i) => ({ ...row, rank: i + 1 }));
+}
+
 // Estatísticas agregadas de um time.
 export async function teamStats(teamId) {
   const standings = await computeStandings();

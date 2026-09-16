@@ -8,6 +8,7 @@ import Matches from "./pages/Matches.jsx";
 import MatchDetail from "./pages/MatchDetail.jsx";
 import Teams from "./pages/Teams.jsx";
 import TeamDetail from "./pages/TeamDetail.jsx";
+import PlayerDetail from "./pages/PlayerDetail.jsx";
 import Scorers from "./pages/Scorers.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/jogos/:id" element={<MatchDetail />} />
         <Route path="/times" element={<Teams />} />
         <Route path="/times/:id" element={<TeamDetail />} />
+        <Route path="/jogadores/:id" element={<PlayerDetail />} />
         <Route path="/artilharia" element={<Scorers />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Private><Admin /></Private>} />

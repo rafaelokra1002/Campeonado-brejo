@@ -1,12 +1,13 @@
 import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
 import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx";
-import { formatDateTime, shareWhatsApp } from "../lib/format.js";
+import { formatDate, formatDateTime, shareWhatsApp } from "../lib/format.js";
 
 export default function MatchDetail() {
   const { id } = useParams();
-  const { data: match, loading } = usePolling(() => api.match(id), { interval: 10000, deps: [id] });
+  const { data: match, loading, refetch } = usePolling(() => api.match(id), { interval: 10000, deps: [id] });
 
   if (loading && !match) return <Loader />;
   if (!match) return <EmptyState title="Partida não encontrada" />;
@@ -76,6 +77,93 @@ export default function MatchDetail() {
       {events.length === 0 && showScore && (
         <div className="card p-5 text-center text-sm text-gray-500">Nenhum lance detalhado registrado.</div>
       )}
+
+      {/* Enquete "quem vence" — só faz sentido antes da bola rolar */}
+      {match.status === "SCHEDULED" && <VotePoll match={match} onVoted={() => refetch(true)} />}
+
+      {/* Confronto direto */}
+      {match.headToHead?.length > 0 && (
+        <div className="card p-5">
+          <h3 className="font-bold mb-4">🤝 Confronto direto</h3>
+          <div className="space-y-2">
+            {match.headToHead.map((m) => (
+              <Link
+                key={m.id}
+                to={`/jogos/${m.id}`}
+                className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 hover:bg-white/5 transition text-sm"
+              >
+                <span className="text-xs text-gray-500 w-20 shrink-0">{formatDate(m.kickoff)}</span>
+                <span className="flex-1 text-right font-semibold truncate">{m.homeTeam.shortName}</span>
+                <span className="font-black tabular-nums px-2">{m.homeScore} × {m.awayScore}</span>
+                <span className="flex-1 font-semibold truncate">{m.awayTeam.shortName}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const VOTE_LABELS = { HOME: "Casa", DRAW: "Empate", AWAY: "Fora" };
+
+function VotePoll({ match, onVoted }) {
+  const [voted, setVoted] = useState(() => {
+    try {
+      return localStorage.getItem(`brejo_vote_${match.id}`);
+    } catch {
+      return null;
+    }
+  });
+  const [voting, setVoting] = useState(false);
+
+  const total = match.votesHome + match.votesDraw + match.votesAway;
+  const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+
+  async function handleVote(choice) {
+    if (voted || voting) return;
+    setVoting(true);
+    try {
+      await api.voteMatch(match.id, choice);
+      try { localStorage.setItem(`brejo_vote_${match.id}`, choice); } catch { /* modo privado etc. */ }
+      setVoted(choice);
+      onVoted();
+    } catch {
+      // votação pode ter encerrado nesse meio tempo; ignora
+    } finally {
+      setVoting(false);
+    }
+  }
+
+  return (
+    <div className="card p-5">
+      <h3 className="font-bold mb-4">🔮 Quem vence?</h3>
+      <div className="space-y-2">
+        {["HOME", "DRAW", "AWAY"].map((choice) => {
+          const count = choice === "HOME" ? match.votesHome : choice === "AWAY" ? match.votesAway : match.votesDraw;
+          const label = choice === "HOME" ? match.homeTeam.shortName : choice === "AWAY" ? match.awayTeam.shortName : VOTE_LABELS.DRAW;
+          const showResults = !!voted;
+          return (
+            <button
+              key={choice}
+              onClick={() => handleVote(choice)}
+              disabled={!!voted || voting}
+              className={`w-full text-left rounded-xl border overflow-hidden relative transition ${
+                voted === choice ? "border-brand" : "border-white/10"
+              } ${voted ? "cursor-default" : "hover:border-brand/50 cursor-pointer"}`}
+            >
+              {showResults && (
+                <div className="absolute inset-y-0 left-0 bg-brand/15" style={{ width: `${pct(count)}%` }} />
+              )}
+              <div className="relative flex items-center justify-between px-4 py-2.5">
+                <span className="font-semibold text-sm">{label}</span>
+                {showResults && <span className="text-sm font-black text-brand-400">{pct(count)}%</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs text-gray-500 mt-3">{total} {total === 1 ? "voto" : "votos"}{!voted && " · escolha uma opção pra ver o resultado"}</p>
     </div>
   );
 }

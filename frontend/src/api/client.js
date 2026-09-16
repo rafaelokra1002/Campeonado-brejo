@@ -47,15 +47,18 @@ export const api = {
   standings: () => request("/standings"),
   standingsByGroup: () => request("/standings?grouped=1"),
   scorers: () => request("/scorers"),
+  cardsRanking: () => request("/cards-ranking"),
   teams: () => request("/teams"),
   team: (id) => request(`/teams/${id}`),
   players: (teamId) => request(`/players${teamId ? `?teamId=${teamId}` : ""}`),
+  player: (id) => request(`/players/${id}`),
   matches: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return request(`/matches${q ? `?${q}` : ""}`);
   },
   rounds: () => request("/matches/rounds"),
   match: (id) => request(`/matches/${id}`),
+  voteMatch: (id, choice) => request(`/matches/${id}/vote`, { method: "POST", body: { choice } }),
   ads: (slot) => request(`/ads${slot ? `?slot=${encodeURIComponent(slot)}` : ""}`),
   settings: () => request("/settings"),
   follow: () => request("/settings/follow", { method: "POST" }),

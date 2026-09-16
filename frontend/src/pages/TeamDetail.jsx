@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling.js";
+import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api, resolveCrestUrl } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge } from "../components/ui.jsx";
 import MatchCard from "../components/MatchCard.jsx";
@@ -7,6 +8,7 @@ import MatchCard from "../components/MatchCard.jsx";
 export default function TeamDetail() {
   const { id } = useParams();
   const { data: team, loading } = usePolling(() => api.team(id), { deps: [id] });
+  const [favoriteId, setFavoriteId] = useFavoriteTeam();
 
   if (loading && !team) return <Loader />;
   if (!team) return <EmptyState title="Time não encontrado" />;
@@ -14,6 +16,7 @@ export default function TeamDetail() {
   const st = team.stats;
   const played = team.matches.filter((m) => m.status !== "SCHEDULED");
   const upcoming = team.matches.filter((m) => m.status === "SCHEDULED");
+  const isFavorite = favoriteId === team.id;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -22,7 +25,7 @@ export default function TeamDetail() {
       {/* Cabeçalho */}
       <div className="card p-6 flex items-center gap-4" style={{ borderColor: `${team.color}40` }}>
         <TeamBadge team={team} size={72} />
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-black">{team.name}</h1>
           <p className="text-sm text-gray-400">
             {team.city && `📍 ${team.city}`} {team.founded && `· Fundado em ${team.founded}`}
@@ -31,6 +34,13 @@ export default function TeamDetail() {
             Grupo {team.group}{st ? ` · ${st.position}º lugar · ${st.points} pts` : ""}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setFavoriteId(isFavorite ? null : team.id)}
+          className={`chip font-bold shrink-0 ${isFavorite ? "bg-accent text-night-950" : "bg-white/5 text-gray-300 border border-white/10"}`}
+        >
+          {isFavorite ? "⭐ Meu time" : "☆ Favoritar"}
+        </button>
       </div>
 
       {/* Estatísticas */}
@@ -51,7 +61,7 @@ export default function TeamDetail() {
         {team.players?.length ? (
           <div className="card divide-y divide-white/5">
             {team.players.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 p-3">
+              <Link key={p.id} to={`/jogadores/${p.id}`} className="flex items-center gap-3 p-3 hover:bg-white/5 transition">
                 {p.photo ? (
                   <img src={resolveCrestUrl(p.photo)} alt={p.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                 ) : (
@@ -61,7 +71,7 @@ export default function TeamDetail() {
                 )}
                 <span className="flex-1 font-semibold">{p.name}</span>
                 <span className="text-xs text-gray-500">{p.position || "—"}</span>
-              </div>
+              </Link>
             ))}
           </div>
         ) : <EmptyState icon="👥" title="Elenco não cadastrado" />}
