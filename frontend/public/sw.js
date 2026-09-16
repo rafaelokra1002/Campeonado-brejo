@@ -1,6 +1,6 @@
 // Service worker mínimo para PWA instalável + cache do app shell.
-const CACHE = "brejolandense-v4";
-const ASSETS = ["/", "/index.html", "/logo-192.png", "/manifest.webmanifest"];
+const CACHE = "brejolandense-v5";
+const ASSETS = ["/", "/index.html", "/logo-192.png", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
