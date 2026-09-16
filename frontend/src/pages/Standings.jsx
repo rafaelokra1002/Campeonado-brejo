@@ -25,7 +25,7 @@ export default function Standings() {
           <h2 className="text-lg font-extrabold mb-3 flex items-center gap-2">
             <span className="badge bg-brand/15 text-brand-400">Grupo {g}</span>
           </h2>
-          <StandingsTable rows={data[g]} promotion={4} />
+          <StandingsTable rows={data[g]} promotion={4} relegation={1} />
         </section>
       ))}
     </div>
