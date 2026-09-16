@@ -191,6 +191,22 @@ export const addGoal = asyncHandler(async (req, res) => {
   res.status(201).json(updated);
 });
 
+// Edita jogador/minuto/pênalti de um gol já registrado, sem mexer no placar
+// (time e "gol contra" ficam fixos, pois alterá-los mudaria o placar).
+const goalEditSchema = z.object({
+  playerId: z.string().optional().nullable(),
+  minute: z.coerce.number().int().optional().nullable(),
+  penalty: z.boolean().optional(),
+});
+
+export const updateGoal = asyncHandler(async (req, res) => {
+  const { id: matchId, goalId } = req.params;
+  const data = goalEditSchema.parse(req.body);
+  await prisma.goal.update({ where: { id: goalId }, data });
+  const updated = await prisma.match.findUnique({ where: { id: matchId }, include: detailInclude });
+  res.json(updated);
+});
+
 export const removeGoal = asyncHandler(async (req, res) => {
   const { id: matchId, goalId } = req.params;
   const goal = await prisma.goal.findUnique({ where: { id: goalId } });
@@ -229,6 +245,20 @@ export const addCard = asyncHandler(async (req, res) => {
   await prisma.card.create({ data: { matchId, ...data } });
   const updated = await prisma.match.findUnique({ where: { id: matchId }, include: detailInclude });
   res.status(201).json(updated);
+});
+
+const cardEditSchema = z.object({
+  playerId: z.string().optional().nullable(),
+  type: z.enum(["YELLOW", "RED"]).optional(),
+  minute: z.coerce.number().int().optional().nullable(),
+});
+
+export const updateCard = asyncHandler(async (req, res) => {
+  const { id: matchId, cardId } = req.params;
+  const data = cardEditSchema.parse(req.body);
+  await prisma.card.update({ where: { id: cardId }, data });
+  const updated = await prisma.match.findUnique({ where: { id: matchId }, include: detailInclude });
+  res.json(updated);
 });
 
 export const removeCard = asyncHandler(async (req, res) => {

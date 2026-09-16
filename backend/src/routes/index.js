@@ -55,8 +55,10 @@ router.delete("/matches/:id", requireAuth, matches.remove);
 router.patch("/matches/:id/score", requireAuth, matches.updateScore);
 
 router.post("/matches/:id/goals", requireAuth, matches.addGoal);
+router.put("/matches/:id/goals/:goalId", requireAuth, matches.updateGoal);
 router.delete("/matches/:id/goals/:goalId", requireAuth, matches.removeGoal);
 router.post("/matches/:id/cards", requireAuth, matches.addCard);
+router.put("/matches/:id/cards/:cardId", requireAuth, matches.updateCard);
 router.delete("/matches/:id/cards/:cardId", requireAuth, matches.removeCard);
 
 router.get("/ads/all", requireAuth, ads.listAll);

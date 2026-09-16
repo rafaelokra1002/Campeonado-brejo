@@ -59,16 +59,21 @@ export default function LiveControl({ matchId, onClose }) {
         <TeamActions match={match} team={match.awayTeam} act={act} matchId={matchId} busy={busy} />
       </div>
 
-      {/* Lista de gols para remover */}
+      {/* Lista de gols: editar (jogador/minuto) ou remover */}
       {match.goals?.length > 0 && (
         <div className="mt-4">
           <div className="label">Gols marcados</div>
           <div className="space-y-1">
             {match.goals.map((g) => (
-              <div key={g.id} className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-1.5">
-                <span>⚽ {g.minute ? `${g.minute}'` : ""} {g.player?.name || "—"} ({g.team.shortName})</span>
-                <button disabled={busy} onClick={() => act(() => api.removeGoal(matchId, g.id))} className="ml-auto text-red-400 text-xs">remover</button>
-              </div>
+              <EventRow
+                key={g.id}
+                icon="⚽"
+                event={g}
+                teamId={g.teamId}
+                onSave={(data) => act(() => api.updateGoal(matchId, g.id, data))}
+                onRemove={() => act(() => api.removeGoal(matchId, g.id))}
+                busy={busy}
+              />
             ))}
           </div>
         </div>
@@ -78,10 +83,16 @@ export default function LiveControl({ matchId, onClose }) {
           <div className="label">Cartões</div>
           <div className="space-y-1">
             {match.cards.map((c) => (
-              <div key={c.id} className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-1.5">
-                <span>{c.type === "RED" ? "🟥" : "🟨"} {c.minute ? `${c.minute}'` : ""} {c.player?.name || "—"} ({c.team.shortName})</span>
-                <button disabled={busy} onClick={() => act(() => api.removeCard(matchId, c.id))} className="ml-auto text-red-400 text-xs">remover</button>
-              </div>
+              <EventRow
+                key={c.id}
+                icon={c.type === "RED" ? "🟥" : "🟨"}
+                event={c}
+                teamId={c.teamId}
+                showType
+                onSave={(data) => act(() => api.updateCard(matchId, c.id, data))}
+                onRemove={() => act(() => api.removeCard(matchId, c.id))}
+                busy={busy}
+              />
             ))}
           </div>
         </div>
@@ -95,6 +106,57 @@ function TeamCol({ team }) {
     <div className="flex flex-col items-center gap-1">
       <TeamBadge team={team} size={44} />
       <span className="text-xs font-bold">{team.shortName}</span>
+    </div>
+  );
+}
+
+// Uma linha de gol/cartão já registrado, com opção de editar jogador/minuto
+// (e tipo, no caso de cartão) ou remover.
+function EventRow({ icon, event, teamId, showType, onSave, onRemove, busy }) {
+  const [editing, setEditing] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [playerId, setPlayerId] = useState(event.player?.id || "");
+  const [minute, setMinute] = useState(event.minute ?? "");
+  const [type, setType] = useState(event.type || "YELLOW");
+
+  useEffect(() => {
+    if (editing) api.players(teamId).then(setPlayers);
+  }, [editing, teamId]);
+
+  function save() {
+    const data = { playerId: playerId || null, minute: minute === "" ? null : Number(minute) };
+    if (showType) data.type = type;
+    onSave(data);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+        <select className="input py-1 text-xs flex-1 min-w-[140px]" value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
+          <option value="">Sem jogador</option>
+          {players.map((p) => <option key={p.id} value={p.id}>{p.number ? `${p.number} · ` : ""}{p.name}</option>)}
+        </select>
+        <input type="number" className="input py-1 text-xs w-16" placeholder="Min." value={minute} onChange={(e) => setMinute(e.target.value)} />
+        {showType && (
+          <select className="input py-1 text-xs w-24" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="YELLOW">🟨 Amarelo</option>
+            <option value="RED">🟥 Vermelho</option>
+          </select>
+        )}
+        <button disabled={busy} onClick={save} className="btn-primary text-xs py-1 px-2">Salvar</button>
+        <button disabled={busy} onClick={() => setEditing(false)} className="btn-ghost text-xs py-1 px-2">Cancelar</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-1.5">
+      <span>{icon} {event.minute ? `${event.minute}'` : ""} {event.player?.name || "—"} ({event.team.shortName})</span>
+      <div className="ml-auto flex items-center gap-3">
+        <button disabled={busy} onClick={() => setEditing(true)} className="text-brand-400 text-xs">editar</button>
+        <button disabled={busy} onClick={onRemove} className="text-red-400 text-xs">remover</button>
+      </div>
     </div>
   );
 }

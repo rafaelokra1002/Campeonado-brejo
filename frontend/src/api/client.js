@@ -84,8 +84,10 @@ export const api = {
   deleteMatch: (id) => request(`/matches/${id}`, { method: "DELETE", auth: true }),
   updateScore: (id, body) => request(`/matches/${id}/score`, { method: "PATCH", body, auth: true }),
   addGoal: (id, body) => request(`/matches/${id}/goals`, { method: "POST", body, auth: true }),
+  updateGoal: (id, goalId, body) => request(`/matches/${id}/goals/${goalId}`, { method: "PUT", body, auth: true }),
   removeGoal: (id, goalId) => request(`/matches/${id}/goals/${goalId}`, { method: "DELETE", auth: true }),
   addCard: (id, body) => request(`/matches/${id}/cards`, { method: "POST", body, auth: true }),
+  updateCard: (id, cardId, body) => request(`/matches/${id}/cards/${cardId}`, { method: "PUT", body, auth: true }),
   removeCard: (id, cardId) => request(`/matches/${id}/cards/${cardId}`, { method: "DELETE", auth: true }),
 
   // Admin - Propagandas
