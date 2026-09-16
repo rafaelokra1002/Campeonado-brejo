@@ -32,7 +32,7 @@ export default function StandingsTable({ rows, compact = false, promotion = 4, r
                   <td className="py-2.5 pl-4 pr-2 font-bold text-gray-400">{row.position}</td>
                   <td className="py-2.5 px-2">
                     <Link to={`/times/${row.teamId}`} className="flex items-center gap-2 hover:text-brand-400 transition">
-                      <TeamBadge team={row} size={28} />
+                      <TeamBadge team={row} size={34} />
                       <span className="font-semibold truncate max-w-[9rem] sm:max-w-none">
                         {compact ? row.shortName : row.name}
                       </span>
