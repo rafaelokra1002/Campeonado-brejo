@@ -1,12 +1,13 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { HomeIcon, ChartIcon, BallIcon, ShieldIcon, TargetIcon } from "./icons.jsx";
 
 const NAV = [
-  { to: "/", label: "Início", icon: "🏠", end: true },
-  { to: "/tabela", label: "Tabela", icon: "📊" },
-  { to: "/jogos", label: "Jogos", icon: "⚽" },
-  { to: "/times", label: "Times", icon: "🛡️" },
-  { to: "/artilharia", label: "Artilharia", icon: "🎯" },
+  { to: "/", label: "Início", Icon: HomeIcon, end: true },
+  { to: "/tabela", label: "Tabela", Icon: ChartIcon },
+  { to: "/jogos", label: "Jogos", Icon: BallIcon },
+  { to: "/times", label: "Times", Icon: ShieldIcon },
+  { to: "/artilharia", label: "Artilharia", Icon: TargetIcon },
 ];
 
 export default function Layout({ children }) {
@@ -72,7 +73,7 @@ export default function Layout({ children }) {
               }`
             }
           >
-            <span className="text-lg">{item.icon}</span>
+            <item.Icon className="w-5 h-5" />
             {item.label}
           </NavLink>
         ))}
