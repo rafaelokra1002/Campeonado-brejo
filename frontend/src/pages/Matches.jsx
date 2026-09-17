@@ -4,6 +4,7 @@ import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle } from "../components/ui.jsx";
 import MatchCard from "../components/MatchCard.jsx";
 import AdBanner from "../components/AdBanner.jsx";
+import { PHASES } from "../lib/format.js";
 
 const FILTERS = [
   { key: "", label: "Todos" },
@@ -13,6 +14,7 @@ const FILTERS = [
 ];
 
 export default function Matches() {
+  const [phase, setPhase] = useState("GROUP");
   const [rounds, setRounds] = useState([]);
   const [round, setRound] = useState("");
   const [status, setStatus] = useState("");
@@ -22,11 +24,11 @@ export default function Matches() {
   }, []);
 
   const { data, loading } = usePolling(
-    () => api.matches({ ...(round && { round }), ...(status && { status }) }),
-    { interval: 12000, deps: [round, status] }
+    () => api.matches({ phase, ...(phase === "GROUP" && round && { round }), ...(status && { status }) }),
+    { interval: 12000, deps: [phase, round, status] }
   );
 
-  // Agrupa por rodada
+  // Na fase de grupos agrupa por rodada; no mata-mata é só uma listinha direta.
   const grouped = (data || []).reduce((acc, m) => {
     (acc[m.round] ||= []).push(m);
     return acc;
@@ -37,6 +39,19 @@ export default function Matches() {
       <SectionTitle>⚽ Jogos & Partidas</SectionTitle>
 
       <AdBanner slot="jogos-topo" />
+
+      {/* Fase */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {PHASES.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => { setPhase(p.key); setRound(""); }}
+            className={`chip ${phase === p.key ? "bg-brand text-night-950" : "bg-white/5 text-gray-300"}`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
 
       {/* Filtros de status */}
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -51,30 +66,32 @@ export default function Matches() {
         ))}
       </div>
 
-      {/* Filtro de rodada */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <button
-          onClick={() => setRound("")}
-          className={`chip ${round === "" ? "bg-accent text-night-950" : "bg-white/5 text-gray-300"}`}
-        >
-          Todas rodadas
-        </button>
-        {rounds.map((r) => (
+      {/* Filtro de rodada (só faz sentido na fase de grupos) */}
+      {phase === "GROUP" && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <button
-            key={r}
-            onClick={() => setRound(String(r))}
-            className={`chip ${round === String(r) ? "bg-accent text-night-950" : "bg-white/5 text-gray-300"}`}
+            onClick={() => setRound("")}
+            className={`chip ${round === "" ? "bg-accent text-night-950" : "bg-white/5 text-gray-300"}`}
           >
-            Rodada {r}
+            Todas rodadas
           </button>
-        ))}
-      </div>
+          {rounds.map((r) => (
+            <button
+              key={r}
+              onClick={() => setRound(String(r))}
+              className={`chip ${round === String(r) ? "bg-accent text-night-950" : "bg-white/5 text-gray-300"}`}
+            >
+              Rodada {r}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading && !data ? (
         <Loader />
-      ) : Object.keys(grouped).length === 0 ? (
+      ) : !data?.length ? (
         <EmptyState icon="⚽" title="Nenhum jogo encontrado" subtitle="Ajuste os filtros acima." />
-      ) : (
+      ) : phase === "GROUP" ? (
         Object.entries(grouped).map(([r, matches]) => (
           <div key={r} className="space-y-3">
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide pt-2">Rodada {r}</h3>
@@ -83,6 +100,10 @@ export default function Matches() {
             </div>
           </div>
         ))
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {data.map((m) => <MatchCard key={m.id} match={m} />)}
+        </div>
       )}
     </div>
   );

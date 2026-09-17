@@ -56,7 +56,8 @@ model Player {
 
 model Match {
   id         String   @id @default(cuid())
-  round      Int // rodada
+  round      Int // rodada (dentro da fase de grupos; nas fases eliminatórias fica fixo em 1)
+  phase      String   @default("GROUP") // GROUP | QUARTER | SEMI | FINAL
   homeTeamId String
   awayTeamId String
   homeTeam   Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])

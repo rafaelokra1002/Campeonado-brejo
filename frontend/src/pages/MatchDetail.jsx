@@ -3,7 +3,7 @@ import { useState } from "react";
 import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx";
-import { formatDate, formatDateTime, shareWhatsApp } from "../lib/format.js";
+import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel } from "../lib/format.js";
 
 export default function MatchDetail() {
   const { id } = useParams();
@@ -22,7 +22,7 @@ export default function MatchDetail() {
       {/* Placar principal */}
       <div className="card p-6 sm:p-8">
         <div className="flex items-center justify-center gap-3 mb-6 text-xs text-gray-400">
-          <span className="font-semibold">Rodada {match.round}</span>
+          <span className="font-semibold">{matchStageLabel(match)}</span>
           <span>·</span>
           <StatusBadge status={match.status} minute={match.minute} />
         </div>

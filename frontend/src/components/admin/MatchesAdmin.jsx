@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client.js";
 import { usePolling } from "../../hooks/usePolling.js";
 import { Loader, StatusBadge } from "../ui.jsx";
-import { formatDateTime } from "../../lib/format.js";
+import { formatDateTime, PHASES, matchStageLabel } from "../../lib/format.js";
 import Modal from "./Modal.jsx";
 import LiveControl from "./LiveControl.jsx";
 
-const EMPTY = { round: 1, homeTeamId: "", awayTeamId: "", kickoff: "", venue: "", status: "SCHEDULED" };
+const EMPTY = { round: 1, phase: "GROUP", homeTeamId: "", awayTeamId: "", kickoff: "", venue: "", status: "SCHEDULED" };
 
 // datetime-local precisa de "YYYY-MM-DDTHH:mm"
 function toLocalInput(iso) {
@@ -18,6 +18,7 @@ function toLocalInput(iso) {
 export default function MatchesAdmin() {
   const [teams, setTeams] = useState([]);
   const { data, loading, refetch } = usePolling(() => api.matches(), { interval: 10000 });
+  const [phaseFilter, setPhaseFilter] = useState("GROUP");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
@@ -28,18 +29,18 @@ export default function MatchesAdmin() {
   useEffect(() => { api.teams().then(setTeams); }, []);
 
   function openNew() {
-    setForm({ ...EMPTY, kickoff: toLocalInput(), homeTeamId: teams[0]?.id || "", awayTeamId: teams[1]?.id || "" });
+    setForm({ ...EMPTY, phase: phaseFilter, kickoff: toLocalInput(), homeTeamId: teams[0]?.id || "", awayTeamId: teams[1]?.id || "" });
     setEditing(null); setError(""); setOpen(true);
   }
   function openEdit(m) {
-    setForm({ round: m.round, homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId, kickoff: toLocalInput(m.kickoff), venue: m.venue || "", status: m.status });
+    setForm({ round: m.round, phase: m.phase || "GROUP", homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId, kickoff: toLocalInput(m.kickoff), venue: m.venue || "", status: m.status });
     setEditing(m.id); setError(""); setOpen(true);
   }
 
   async function save() {
     setSaving(true); setError("");
     try {
-      const payload = { ...form, round: Number(form.round), kickoff: new Date(form.kickoff).toISOString() };
+      const payload = { ...form, round: form.phase === "GROUP" ? Number(form.round) : 1, kickoff: new Date(form.kickoff).toISOString() };
       if (editing) await api.updateMatch(editing, payload);
       else await api.createMatch(payload);
       setOpen(false); refetch(true);
@@ -53,17 +54,31 @@ export default function MatchesAdmin() {
 
   if (loading && !data) return <Loader />;
 
+  const filtered = data?.filter((m) => (m.phase || "GROUP") === phaseFilter) || [];
+
   return (
     <div className="space-y-4">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {PHASES.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setPhaseFilter(p.key)}
+            className={`chip text-sm ${phaseFilter === p.key ? "bg-brand text-night-950" : "bg-white/5 text-gray-300"}`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-400">{data?.length || 0} jogos</p>
+        <p className="text-sm text-gray-400">{filtered.length} jogos</p>
         <button onClick={openNew} className="btn-primary text-sm" disabled={teams.length < 2}>+ Novo jogo</button>
       </div>
 
       <div className="space-y-2">
-        {data?.map((m) => (
+        {filtered.map((m) => (
           <div key={m.id} className="card p-3 flex items-center gap-3 flex-wrap">
-            <span className="badge bg-white/5 text-gray-400">R{m.round}</span>
+            <span className="badge bg-white/5 text-gray-400">{matchStageLabel(m)}</span>
             <div className="flex-1 min-w-0 font-semibold text-sm">
               {m.homeTeam.shortName} <span className="text-brand-400">{m.homeScore} × {m.awayScore}</span> {m.awayTeam.shortName}
               <div className="text-xs text-gray-500 font-normal">{formatDateTime(m.kickoff)}</div>
@@ -84,9 +99,16 @@ export default function MatchesAdmin() {
         </>}>
         {error && <div className="bg-red-500/10 text-red-400 text-sm rounded-xl px-3 py-2 mb-3">{error}</div>}
         <div className="space-y-3">
+          <div><label className="label">Fase</label>
+            <select className="input" value={form.phase} onChange={(e) => setForm({ ...form, phase: e.target.value })}>
+              {PHASES.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="label">Rodada</label><input className="input" type="number" min={1} value={form.round} onChange={(e) => setForm({ ...form, round: e.target.value })} /></div>
-            <div><label className="label">Status</label>
+            {form.phase === "GROUP" && (
+              <div><label className="label">Rodada</label><input className="input" type="number" min={1} value={form.round} onChange={(e) => setForm({ ...form, round: e.target.value })} /></div>
+            )}
+            <div className={form.phase === "GROUP" ? "" : "col-span-2"}><label className="label">Status</label>
               <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 <option value="SCHEDULED">Agendado</option>
                 <option value="LIVE">Ao vivo</option>

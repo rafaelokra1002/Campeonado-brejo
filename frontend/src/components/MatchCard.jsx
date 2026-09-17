@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { TeamBadge, StatusBadge } from "./ui.jsx";
-import { formatDateTime, shareWhatsApp, teamFirstName } from "../lib/format.js";
+import { formatDateTime, shareWhatsApp, teamFirstName, matchStageLabel } from "../lib/format.js";
 
 export default function MatchCard({ match, compact = false }) {
   const showScore = match.status !== "SCHEDULED";
@@ -10,7 +10,7 @@ export default function MatchCard({ match, compact = false }) {
       className="card p-4 block hover:border-brand/40 hover:-translate-y-0.5 transition-all animate-fade-in"
     >
       <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
-        <span className="font-semibold">Rodada {match.round}</span>
+        <span className="font-semibold">{matchStageLabel(match)}</span>
         <StatusBadge status={match.status} minute={match.minute} />
       </div>
 

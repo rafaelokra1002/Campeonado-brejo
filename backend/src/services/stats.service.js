@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma.js";
 export async function computeStandings() {
   const teams = await prisma.team.findMany();
   const matches = await prisma.match.findMany({
-    where: { status: "FINISHED" },
+    where: { status: "FINISHED", phase: "GROUP" },
   });
 
   const table = new Map();

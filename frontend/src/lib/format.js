@@ -11,6 +11,23 @@ export function formatDateTime(iso) {
   return `${formatDate(iso)} · ${formatTime(iso)}`;
 }
 
+export const PHASES = [
+  { key: "GROUP", label: "1ª Fase" },
+  { key: "QUARTER", label: "Quartas de Final" },
+  { key: "SEMI", label: "Semifinal" },
+  { key: "FINAL", label: "Final" },
+];
+
+export function phaseLabel(phase) {
+  return PHASES.find((p) => p.key === phase)?.label || "1ª Fase";
+}
+
+// Rótulo de "onde" a partida está: "Rodada X" na fase de grupos, ou o nome
+// da fase (Quartas/Semifinal/Final) no mata-mata.
+export function matchStageLabel(match) {
+  return !match.phase || match.phase === "GROUP" ? `Rodada ${match.round}` : phaseLabel(match.phase);
+}
+
 export const STATUS = {
   SCHEDULED: { label: "Agendado", color: "text-gray-300 bg-white/10" },
   LIVE: { label: "Ao vivo", color: "text-white bg-red-500" },

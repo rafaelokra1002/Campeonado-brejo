@@ -21,6 +21,7 @@ const detailInclude = {
 
 const matchSchema = z.object({
   round: z.coerce.number().int().min(1),
+  phase: z.enum(["GROUP", "QUARTER", "SEMI", "FINAL"]).optional(),
   homeTeamId: z.string().min(1),
   awayTeamId: z.string().min(1),
   homeScore: z.coerce.number().int().min(0).optional(),
@@ -32,10 +33,11 @@ const matchSchema = z.object({
 });
 
 export const list = asyncHandler(async (req, res) => {
-  const { round, status, teamId } = req.query;
+  const { round, status, teamId, phase } = req.query;
   const where = {};
   if (round) where.round = Number(round);
   if (status) where.status = String(status);
+  if (phase) where.phase = String(phase);
   if (teamId) where.OR = [{ homeTeamId: String(teamId) }, { awayTeamId: String(teamId) }];
 
   const matches = await prisma.match.findMany({
@@ -46,9 +48,11 @@ export const list = asyncHandler(async (req, res) => {
   res.json(matches);
 });
 
-// Rodadas existentes (para o filtro).
+// Rodadas existentes na fase de grupos (para o filtro). O mata-mata não tem
+// "rodada" de verdade, então fica de fora dessa lista.
 export const rounds = asyncHandler(async (_req, res) => {
   const rows = await prisma.match.findMany({
+    where: { phase: "GROUP" },
     distinct: ["round"],
     select: { round: true },
     orderBy: { round: "asc" },
