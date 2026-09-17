@@ -34,8 +34,8 @@ export const getOne = asyncHandler(async (req, res) => {
   const matches = await prisma.match.findMany({
     where: { OR: [{ homeTeamId: team.id }, { awayTeamId: team.id }] },
     include: {
-      homeTeam: { select: { id: true, shortName: true, crest: true } },
-      awayTeam: { select: { id: true, shortName: true, crest: true } },
+      homeTeam: { select: { id: true, name: true, shortName: true, crest: true } },
+      awayTeam: { select: { id: true, name: true, shortName: true, crest: true } },
     },
     orderBy: { kickoff: "asc" },
   });

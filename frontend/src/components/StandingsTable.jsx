@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { TeamBadge, FormBadge } from "./ui.jsx";
+import { teamFirstName } from "../lib/format.js";
 
 // zonas: nº de times classificados (verde) e rebaixados (vermelho)
 export default function StandingsTable({ rows, compact = false, promotion = 4, relegation = 0 }) {
@@ -34,7 +35,7 @@ export default function StandingsTable({ rows, compact = false, promotion = 4, r
                     <Link to={`/times/${row.teamId}`} className="flex items-center gap-2 hover:text-brand-400 transition">
                       <TeamBadge team={row} size={34} />
                       <span className="font-semibold truncate max-w-[9rem] sm:max-w-none">
-                        {compact ? row.shortName : row.name}
+                        {compact ? teamFirstName(row.name) : row.name}
                       </span>
                     </Link>
                   </td>

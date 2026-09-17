@@ -3,6 +3,7 @@ import { usePolling } from "../hooks/usePolling.js";
 import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
+import { teamFirstName } from "../lib/format.js";
 import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
@@ -161,7 +162,7 @@ function MyTeamSection() {
             <Link to={`/jogos/${nextMatch.id}`} className="rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition">
               <div className="text-[10px] text-gray-500 uppercase tracking-wide">Próximo jogo</div>
               <div className="text-sm font-semibold truncate">
-                {nextMatch.homeTeam.shortName} × {nextMatch.awayTeam.shortName}
+                {teamFirstName(nextMatch.homeTeam.name)} × {teamFirstName(nextMatch.awayTeam.name)}
               </div>
             </Link>
           )}
@@ -169,7 +170,7 @@ function MyTeamSection() {
             <Link to={`/jogos/${lastMatch.id}`} className="rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition">
               <div className="text-[10px] text-gray-500 uppercase tracking-wide">Último resultado</div>
               <div className="text-sm font-semibold truncate">
-                {lastMatch.homeTeam.shortName} {lastMatch.homeScore} × {lastMatch.awayScore} {lastMatch.awayTeam.shortName}
+                {teamFirstName(lastMatch.homeTeam.name)} {lastMatch.homeScore} × {lastMatch.awayScore} {teamFirstName(lastMatch.awayTeam.name)}
               </div>
             </Link>
           )}

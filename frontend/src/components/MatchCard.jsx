@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { TeamBadge, StatusBadge } from "./ui.jsx";
-import { formatDateTime, shareWhatsApp } from "../lib/format.js";
+import { formatDateTime, shareWhatsApp, teamFirstName } from "../lib/format.js";
 
 export default function MatchCard({ match, compact = false }) {
   const showScore = match.status !== "SCHEDULED";
@@ -53,7 +53,7 @@ function TeamSide({ team, align }) {
   return (
     <div className={`flex items-center gap-2 flex-1 min-w-0 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
       <TeamBadge team={team} size={36} />
-      <span className="font-bold text-sm truncate">{team.shortName}</span>
+      <span className="font-bold text-sm truncate">{teamFirstName(team.name)}</span>
     </div>
   );
 }

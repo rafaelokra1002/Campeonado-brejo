@@ -17,6 +17,12 @@ export const STATUS = {
   FINISHED: { label: "Encerrado", color: "text-brand-400 bg-brand/10" },
 };
 
+// Primeiro nome do time (ex: "Ponta D'Água" -> "Ponta"), usado nos lugares
+// compactos que hoje mostram a sigla (VIL, PDA...) e ficam difíceis de ler.
+export function teamFirstName(name) {
+  return name ? name.split(" ")[0] : "";
+}
+
 // Converte um link "normal" do YouTube (watch, youtu.be, live, shorts) na URL
 // de embed usada no <iframe>. Retorna null se não conseguir reconhecer um ID.
 export function youtubeEmbedUrl(url) {
