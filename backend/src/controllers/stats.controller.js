@@ -23,7 +23,7 @@ export const dashboard = asyncHandler(async (_req, res) => {
     awayTeam: { select: { id: true, name: true, shortName: true, crest: true, color: true } },
   };
 
-  const [standingsByGroup, scorers, live, upcoming, recent, roundsRows, totals] = await Promise.all([
+  const [standingsByGroup, scorers, live, upcoming, recent, nextKnockoutMatch, roundsRows, totals] = await Promise.all([
     computeStandingsByGroup(),
     computeScorers(),
     prisma.match.findMany({ where: { status: "LIVE" }, include, orderBy: { kickoff: "asc" } }),
@@ -39,6 +39,11 @@ export const dashboard = asyncHandler(async (_req, res) => {
       orderBy: { kickoff: "desc" },
       take: 5,
     }),
+    prisma.match.findFirst({
+      where: { status: "SCHEDULED", phase: { not: "GROUP" } },
+      include,
+      orderBy: { kickoff: "asc" },
+    }),
     prisma.match.findMany({ distinct: ["round"], select: { round: true }, orderBy: { round: "desc" } }),
     Promise.all([prisma.team.count(), prisma.player.count(), prisma.match.count(), prisma.goal.count()]),
   ]);
@@ -52,6 +57,7 @@ export const dashboard = asyncHandler(async (_req, res) => {
     live,
     upcoming,
     recent,
+    nextKnockoutMatch,
     currentRound,
     totals: { teams: teamCount, players: playerCount, matches: matchCount, goals: goalCount },
   });

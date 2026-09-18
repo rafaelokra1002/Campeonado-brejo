@@ -16,7 +16,7 @@ export default function Home() {
   if (loading && !data) return <Loader label="Carregando o campeonato..." />;
   if (!data) return <EmptyState title="Não foi possível carregar os dados" subtitle="Verifique se o backend está rodando." />;
 
-  const { live, upcoming, recent, standingsByGroup, topScorers, currentRound, totals } = data;
+  const { live, upcoming, recent, nextKnockoutMatch, standingsByGroup, topScorers, currentRound, totals } = data;
   const groups = Object.keys(standingsByGroup || {}).sort();
 
   return (
@@ -47,6 +47,16 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2">
             {live.map((m) => <MatchCard key={m.id} match={m} />)}
           </div>
+        </section>
+      )}
+
+      {/* Próximo jogo do mata-mata */}
+      {nextKnockoutMatch && (
+        <section>
+          <SectionTitle action={<Link to="/jogos" className="text-sm text-brand-400 font-semibold">Ver mata-mata</Link>}>
+            🏆 Próximo jogo do mata-mata
+          </SectionTitle>
+          <MatchCard match={nextKnockoutMatch} />
         </section>
       )}
 
