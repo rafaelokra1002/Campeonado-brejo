@@ -3,7 +3,7 @@ import { usePolling } from "../hooks/usePolling.js";
 import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
-import { teamFirstName } from "../lib/format.js";
+import { teamFirstName, shareStandings } from "../lib/format.js";
 import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
@@ -78,7 +78,12 @@ export default function Home() {
 
       {/* Tabela resumida por grupo */}
       <section>
-        <SectionTitle action={<Link to="/tabela" className="text-sm text-brand-400 font-semibold">Tabela completa</Link>}>
+        <SectionTitle action={
+          <div className="flex items-center gap-3">
+            <button onClick={() => shareStandings(standingsByGroup)} className="text-sm text-brand-400 font-semibold">📱 Compartilhar</button>
+            <Link to="/tabela" className="text-sm text-brand-400 font-semibold">Tabela completa</Link>
+          </div>
+        }>
           📊 Classificação
         </SectionTitle>
         <div className="grid lg:grid-cols-2 gap-4">

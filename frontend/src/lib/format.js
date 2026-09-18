@@ -75,6 +75,21 @@ export function shareWhatsApp(match) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
+// Compartilhar a classificação (por grupo) no WhatsApp, em formato de texto.
+export function shareStandings(standingsByGroup) {
+  const groups = Object.keys(standingsByGroup).sort();
+  const lines = ["📊 Classificação · Campeonato Brejolandense", ""];
+  for (const g of groups) {
+    lines.push(`GRUPO ${g}`);
+    for (const row of standingsByGroup[g]) {
+      lines.push(`${row.position}º ${row.name} - ${row.points} pts`);
+    }
+    lines.push("");
+  }
+  lines.push(`${window.location.origin}/tabela`);
+  window.open(`https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
+}
+
 // Compartilhar a página atual: usa o share nativo do celular quando disponível,
 // senão cai para o WhatsApp Web.
 export async function shareSite(title = "Campeonato Brejolandense") {
