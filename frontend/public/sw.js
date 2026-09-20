@@ -1,5 +1,6 @@
-// Service worker mínimo para PWA instalável + cache do app shell.
-const CACHE = "brejolandense-v5";
+// Service worker mínimo para PWA instalável. Estratégia "rede primeiro": sempre
+// busca a versão mais nova online e só usa o cache quando estiver sem internet.
+const CACHE = "brejolandense-v6";
 const ASSETS = ["/", "/index.html", "/logo-192.png", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
@@ -21,15 +22,12 @@ self.addEventListener("fetch", (e) => {
   if (request.method !== "GET") return;
 
   e.respondWith(
-    caches.match(request).then((cached) =>
-      cached ||
-      fetch(request)
-        .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE).then((c) => c.put(request, clone));
-          return res;
-        })
-        .catch(() => caches.match("/index.html"))
-    )
+    fetch(request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE).then((c) => c.put(request, clone));
+        return res;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match("/index.html")))
   );
 });
