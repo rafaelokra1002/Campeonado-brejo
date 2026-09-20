@@ -3,7 +3,8 @@ import { usePolling } from "../hooks/usePolling.js";
 import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
-import { teamFirstName, shareStandings } from "../lib/format.js";
+import { teamFirstName } from "../lib/format.js";
+import ShareStandingsButton from "../components/ShareStandings.jsx";
 import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
@@ -90,7 +91,7 @@ export default function Home() {
       <section>
         <SectionTitle action={
           <div className="flex items-center gap-3">
-            <button onClick={() => shareStandings(standingsByGroup)} className="text-sm text-brand-400 font-semibold">📱 Compartilhar</button>
+            <ShareStandingsButton data={standingsByGroup} className="text-sm text-brand-400 font-semibold">📱 Compartilhar</ShareStandingsButton>
             <Link to="/tabela" className="text-sm text-brand-400 font-semibold">Tabela completa</Link>
           </div>
         }>

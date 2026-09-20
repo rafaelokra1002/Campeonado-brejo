@@ -2,7 +2,7 @@ import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState } from "../components/ui.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
-import { shareStandings } from "../lib/format.js";
+import ShareStandingsButton from "../components/ShareStandings.jsx";
 
 export default function Standings() {
   const { data, loading } = usePolling(() => api.standingsByGroup(), { interval: 20000 });
@@ -21,9 +21,9 @@ export default function Standings() {
             P = Pontos · J = Jogos · V = Vitórias · E = Empates · D = Derrotas · GP = Gols Pró · GC = Gols Contra · SG = Saldo
           </p>
         </div>
-        <button onClick={() => shareStandings(data)} className="btn-primary text-sm shrink-0">
+        <ShareStandingsButton data={data} className="btn-primary text-sm shrink-0">
           📱 Compartilhar
-        </button>
+        </ShareStandingsButton>
       </div>
 
       {groups.map((g) => (
