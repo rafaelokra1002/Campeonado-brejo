@@ -4,11 +4,15 @@ import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx";
 import RulesCard from "../components/RulesCard.jsx";
-import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel } from "../lib/format.js";
+import LiveControl from "../components/admin/LiveControl.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel, teamFirstName } from "../lib/format.js";
 
 export default function MatchDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const { data: match, loading, refetch } = usePolling(() => api.match(id), { interval: 10000, deps: [id] });
+  const [editing, setEditing] = useState(false);
 
   if (loading && !match) return <Loader />;
   if (!match) return <EmptyState title="Partida não encontrada" />;
@@ -54,7 +58,20 @@ export default function MatchDetail() {
             </button>
           </div>
         )}
+
+        {/* Só aparece pro admin logado: atalho pra lançar/editar gols, cartões e status */}
+        {user && (
+          <div className="flex justify-center mt-3">
+            <button onClick={() => setEditing(true)} className="btn-ghost text-sm border border-brand/40 text-brand-400">
+              ⚽ Gols, cartões e status (admin)
+            </button>
+          </div>
+        )}
       </div>
+
+      {editing && (
+        <LiveControl matchId={match.id} onClose={() => { setEditing(false); refetch(true); }} />
+      )}
 
       {/* Linha do tempo */}
       {events.length > 0 && (
@@ -94,9 +111,9 @@ export default function MatchDetail() {
                 className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 hover:bg-white/5 transition text-sm"
               >
                 <span className="text-xs text-gray-500 w-20 shrink-0">{formatDate(m.kickoff)}</span>
-                <span className="flex-1 text-right font-semibold truncate">{m.homeTeam.shortName}</span>
+                <span className="flex-1 text-right font-semibold truncate">{teamFirstName(m.homeTeam.name)}</span>
                 <span className="font-black tabular-nums px-2">{m.homeScore} × {m.awayScore}</span>
-                <span className="flex-1 font-semibold truncate">{m.awayTeam.shortName}</span>
+                <span className="flex-1 font-semibold truncate">{teamFirstName(m.awayTeam.name)}</span>
               </Link>
             ))}
           </div>
@@ -144,7 +161,7 @@ function VotePoll({ match, onVoted }) {
       <div className="space-y-2">
         {["HOME", "DRAW", "AWAY"].map((choice) => {
           const count = choice === "HOME" ? match.votesHome : choice === "AWAY" ? match.votesAway : match.votesDraw;
-          const label = choice === "HOME" ? match.homeTeam.shortName : choice === "AWAY" ? match.awayTeam.shortName : VOTE_LABELS.DRAW;
+          const label = choice === "HOME" ? teamFirstName(match.homeTeam.name) : choice === "AWAY" ? teamFirstName(match.awayTeam.name) : VOTE_LABELS.DRAW;
           const showResults = !!voted;
           return (
             <button
@@ -175,7 +192,7 @@ function TeamCol({ team }) {
   return (
     <Link to={`/times/${team.id}`} className="flex flex-col items-center gap-2 group">
       <TeamBadge team={team} size={64} />
-      <span className="font-bold text-sm text-center group-hover:text-brand-400 transition">{team.shortName}</span>
+      <span className="font-bold text-sm text-center group-hover:text-brand-400 transition">{teamFirstName(team.name)}</span>
     </Link>
   );
 }
@@ -190,7 +207,7 @@ function buildTimeline(match) {
       side,
       icon: g.ownGoal ? "🥅" : "⚽",
       text: `${g.player?.name || "Gol"}${g.penalty ? " (pên.)" : ""}${g.ownGoal ? " (contra)" : ""}`,
-      teamShort: side === "home" ? match.homeTeam.shortName : match.awayTeam.shortName,
+      teamShort: teamFirstName(side === "home" ? match.homeTeam.name : match.awayTeam.name),
     });
   }
   for (const c of match.cards || []) {
@@ -200,7 +217,7 @@ function buildTimeline(match) {
       side,
       icon: c.type === "RED" ? "🟥" : "🟨",
       text: c.player?.name || (c.type === "RED" ? "Cartão vermelho" : "Cartão amarelo"),
-      teamShort: side === "home" ? match.homeTeam.shortName : match.awayTeam.shortName,
+      teamShort: teamFirstName(side === "home" ? match.homeTeam.name : match.awayTeam.name),
     });
   }
   return events.sort((a, b) => (a.minute ?? 999) - (b.minute ?? 999));

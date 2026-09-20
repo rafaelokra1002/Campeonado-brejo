@@ -69,7 +69,7 @@ export function youtubeEmbedUrl(url) {
 
 // Compartilhar resultado no WhatsApp
 export function shareWhatsApp(match) {
-  const line = `⚽ ${match.homeTeam.shortName} ${match.homeScore} x ${match.awayScore} ${match.awayTeam.shortName}`;
+  const line = `⚽ ${teamFirstName(match.homeTeam.name)} ${match.homeScore} x ${match.awayScore} ${teamFirstName(match.awayTeam.name)}`;
   const status = match.status === "LIVE" ? " (AO VIVO)" : match.status === "FINISHED" ? " (Final)" : "";
   const text = `${line}${status}\nCampeonato Brejolandense · Rodada ${match.round}\n${window.location.origin}/jogos/${match.id}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");

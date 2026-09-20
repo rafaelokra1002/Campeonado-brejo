@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
+import { teamFirstName } from "../lib/format.js";
 
 export default function Scorers() {
   const [tab, setTab] = useState("goals"); // goals | cards
@@ -68,7 +69,7 @@ function GoalsRanking() {
             <TeamBadge team={s.team} size={36} />
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{s.name}</div>
-              <span className="text-xs text-gray-500">{s.team.shortName}</span>
+              <span className="text-xs text-gray-500">{teamFirstName(s.team.name)}</span>
             </div>
             {s.penalties > 0 && <span className="text-xs text-gray-500">{s.penalties} pên.</span>}
             <div className="text-right w-14">
@@ -95,7 +96,7 @@ function CardsRanking() {
           <TeamBadge team={s.team} size={36} />
           <div className="flex-1 min-w-0">
             <div className="font-semibold truncate">{s.name}</div>
-            <span className="text-xs text-gray-500">{s.team.shortName}</span>
+            <span className="text-xs text-gray-500">{teamFirstName(s.team.name)}</span>
           </div>
           <div className="flex items-center gap-2 text-sm font-bold">
             {s.yellow > 0 && <span className="flex items-center gap-1">🟨 {s.yellow}</span>}

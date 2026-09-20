@@ -122,7 +122,7 @@ export default function Home() {
               <TeamBadge team={s.team} size={32} />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold truncate">{s.name}</div>
-                <div className="text-xs text-gray-500">{s.team.shortName}</div>
+                <div className="text-xs text-gray-500">{teamFirstName(s.team.name)}</div>
               </div>
               <div className="text-right">
                 <span className="text-xl font-black text-brand-400">{s.goals}</span>

@@ -46,7 +46,7 @@ export default function Layout({ children }) {
 
           {user && (
             <div className="flex items-center gap-2 shrink-0">
-              <Link to="/admin" className="btn-ghost text-sm py-2 px-3 hidden sm:inline-flex">Painel</Link>
+              <Link to="/admin" className="btn-ghost text-sm py-2 px-3">Painel</Link>
               <button onClick={() => { logout(); navigate("/"); }} className="btn-ghost text-sm py-2 px-3">Sair</button>
             </div>
           )}

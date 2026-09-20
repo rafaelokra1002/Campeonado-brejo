@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client.js";
 import Modal from "./Modal.jsx";
 import { TeamBadge } from "../ui.jsx";
-import { matchStageLabel } from "../../lib/format.js";
+import { matchStageLabel, teamFirstName } from "../../lib/format.js";
 
 // Painel de controle da partida em tempo real: status, placar, gols e cartões.
 export default function LiveControl({ matchId, onClose }) {
@@ -23,6 +23,8 @@ export default function LiveControl({ matchId, onClose }) {
 
   const setStatus = (status) => act(() => api.updateScore(matchId, { status, minute: status === "LIVE" ? (match.minute || 1) : null }));
   const setMinute = (minute) => act(() => api.updateScore(matchId, { minute: Number(minute) }));
+
+  const teamLabel = (id) => teamFirstName(id === match?.homeTeam.id ? match.homeTeam.name : match?.awayTeam.name);
 
   if (!match) return <Modal open title="Carregando..." onClose={onClose}><div className="py-6 text-center text-gray-500">...</div></Modal>;
 
@@ -71,6 +73,7 @@ export default function LiveControl({ matchId, onClose }) {
                 icon="⚽"
                 event={g}
                 teamId={g.teamId}
+                teamName={teamLabel(g.teamId)}
                 onSave={(data) => act(() => api.updateGoal(matchId, g.id, data))}
                 onRemove={() => act(() => api.removeGoal(matchId, g.id))}
                 busy={busy}
@@ -89,6 +92,7 @@ export default function LiveControl({ matchId, onClose }) {
                 icon={c.type === "RED" ? "🟥" : "🟨"}
                 event={c}
                 teamId={c.teamId}
+                teamName={teamLabel(c.teamId)}
                 showType
                 onSave={(data) => act(() => api.updateCard(matchId, c.id, data))}
                 onRemove={() => act(() => api.removeCard(matchId, c.id))}
@@ -106,14 +110,14 @@ function TeamCol({ team }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <TeamBadge team={team} size={44} />
-      <span className="text-xs font-bold">{team.shortName}</span>
+      <span className="text-xs font-bold">{teamFirstName(team.name)}</span>
     </div>
   );
 }
 
 // Uma linha de gol/cartão já registrado, com opção de editar jogador/minuto
 // (e tipo, no caso de cartão) ou remover.
-function EventRow({ icon, event, teamId, showType, onSave, onRemove, busy }) {
+function EventRow({ icon, event, teamId, teamName, showType, onSave, onRemove, busy }) {
   const [editing, setEditing] = useState(false);
   const [players, setPlayers] = useState([]);
   const [playerId, setPlayerId] = useState(event.player?.id || "");
@@ -153,7 +157,7 @@ function EventRow({ icon, event, teamId, showType, onSave, onRemove, busy }) {
 
   return (
     <div className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-2">
-      <span className="min-w-0 flex-1">{icon} {event.minute ? `${event.minute}'` : ""} {event.player?.name || "—"} ({event.team.shortName})</span>
+      <span className="min-w-0 flex-1">{icon} {event.minute ? `${event.minute}'` : ""} {event.player?.name || "—"} ({teamName})</span>
       <button disabled={busy} onClick={() => setEditing(true)} className="shrink-0 text-brand-400 text-xs font-semibold px-3 py-2 rounded-lg bg-brand/10">Editar</button>
       <button disabled={busy} onClick={onRemove} className="shrink-0 text-red-400 text-xs font-semibold px-3 py-2 rounded-lg bg-red-500/10">Remover</button>
     </div>
@@ -172,7 +176,7 @@ function TeamActions({ match, team, act, matchId, busy }) {
 
   return (
     <div className="card p-3 space-y-2">
-      <div className="font-bold text-sm text-center">{team.shortName}</div>
+      <div className="font-bold text-sm text-center">{teamFirstName(team.name)}</div>
       <select className="input py-1.5 text-sm" value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
         <option value="">Jogador (opcional)</option>
         {players.map((p) => <option key={p.id} value={p.id}>{p.number ? `${p.number} · ` : ""}{p.name}</option>)}
