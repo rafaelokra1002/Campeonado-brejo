@@ -3,8 +3,9 @@ import { usePolling } from "../hooks/usePolling.js";
 import { useFavoriteTeam } from "../hooks/useFavoriteTeam.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
-import { teamFirstName } from "../lib/format.js";
+import { teamFirstName, matchStageLabel } from "../lib/format.js";
 import ShareStandingsButton from "../components/ShareStandings.jsx";
+import RoundTeamPitch from "../components/RoundTeamPitch.jsx";
 import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
@@ -107,6 +108,8 @@ export default function Home() {
         </div>
       </section>
 
+      <LatestRoundTeamSection />
+
       {/* Artilharia */}
       <section>
         <SectionTitle action={<Link to="/artilharia" className="text-sm text-brand-400 font-semibold">Ver ranking</Link>}>
@@ -132,6 +135,22 @@ export default function Home() {
 
       <AdBanner slot="home-bottom" />
     </div>
+  );
+}
+
+// Última seleção da rodada divulgada (some se o admin ainda não cadastrou nenhuma).
+function LatestRoundTeamSection() {
+  const { data } = usePolling(() => api.roundTeams(), { interval: 30000 });
+  const latest = data?.[0];
+  if (!latest) return null;
+
+  return (
+    <section>
+      <SectionTitle action={<Link to="/selecao" className="text-sm text-brand-400 font-semibold">Ver todas</Link>}>
+        ⭐ Seleção · {matchStageLabel(latest)}
+      </SectionTitle>
+      <RoundTeamPitch picks={latest.picks} />
+    </section>
   );
 }
 

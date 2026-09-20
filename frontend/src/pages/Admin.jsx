@@ -5,11 +5,13 @@ import PlayersAdmin from "../components/admin/PlayersAdmin.jsx";
 import MatchesAdmin from "../components/admin/MatchesAdmin.jsx";
 import AdsAdmin from "../components/admin/AdsAdmin.jsx";
 import SettingsAdmin from "../components/admin/SettingsAdmin.jsx";
+import SelectionAdmin from "../components/admin/SelectionAdmin.jsx";
 
 const TABS = [
   { key: "matches", label: "⚽ Jogos", Comp: MatchesAdmin },
   { key: "teams", label: "🛡️ Times", Comp: TeamsAdmin },
   { key: "players", label: "👥 Jogadores", Comp: PlayersAdmin },
+  { key: "selection", label: "⭐ Seleção", Comp: SelectionAdmin },
   { key: "ads", label: "📢 Propagandas", Comp: AdsAdmin },
   { key: "settings", label: "🎨 Site", Comp: SettingsAdmin },
 ];

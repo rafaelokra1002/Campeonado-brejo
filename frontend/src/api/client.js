@@ -60,6 +60,7 @@ export const api = {
   match: (id) => request(`/matches/${id}`),
   voteMatch: (id, choice) => request(`/matches/${id}/vote`, { method: "POST", body: { choice } }),
   ads: (slot) => request(`/ads${slot ? `?slot=${encodeURIComponent(slot)}` : ""}`),
+  roundTeams: () => request("/round-teams"),
   settings: () => request("/settings"),
   follow: () => request("/settings/follow", { method: "POST" }),
   unfollow: () => request("/settings/unfollow", { method: "POST" }),
@@ -95,6 +96,10 @@ export const api = {
   createAd: (body) => request("/ads", { method: "POST", body, auth: true }),
   updateAd: (id, body) => request(`/ads/${id}`, { method: "PUT", body, auth: true }),
   deleteAd: (id) => request(`/ads/${id}`, { method: "DELETE", auth: true }),
+
+  // Admin - Seleção da rodada
+  saveRoundTeam: (body) => request("/round-teams", { method: "PUT", body, auth: true }),
+  deleteRoundTeam: (id) => request(`/round-teams/${id}`, { method: "DELETE", auth: true }),
 
   // Admin - Configurações (banner da home, organizador)
   updateSettings: (body) => request("/settings", { method: "PUT", body, auth: true }),

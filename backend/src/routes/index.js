@@ -9,6 +9,7 @@ import * as matches from "../controllers/match.controller.js";
 import * as stats from "../controllers/stats.controller.js";
 import * as ads from "../controllers/ad.controller.js";
 import * as settings from "../controllers/settings.controller.js";
+import * as roundTeams from "../controllers/roundTeam.controller.js";
 import { uploadImage } from "../controllers/upload.controller.js";
 
 const router = Router();
@@ -35,6 +36,8 @@ router.get("/matches/:id", matches.getOne);
 router.post("/matches/:id/vote", matches.vote);
 
 router.get("/ads", ads.list);
+
+router.get("/round-teams", roundTeams.list);
 
 router.get("/settings", settings.get);
 router.post("/settings/follow", settings.follow);
@@ -67,6 +70,9 @@ router.put("/ads/:id", requireAuth, ads.update);
 router.delete("/ads/:id", requireAuth, ads.remove);
 
 router.put("/settings", requireAuth, settings.update);
+
+router.put("/round-teams", requireAuth, roundTeams.save);
+router.delete("/round-teams/:id", requireAuth, roundTeams.remove);
 
 // Upload de imagens (escudo de time, banner de propaganda, etc.)
 router.post("/upload", requireAuth, uploadCrest, uploadImage);

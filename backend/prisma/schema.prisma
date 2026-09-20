@@ -50,8 +50,32 @@ model Player {
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  goals Goal[]
-  cards Card[]
+  goals      Goal[]
+  cards      Card[]
+  roundPicks RoundTeamPick[]
+}
+
+// Seleção da rodada (os melhores jogadores), montada pelo admin.
+model RoundTeam {
+  id        String          @id @default(cuid())
+  phase     String          @default("GROUP") // GROUP | QUARTER | SEMI | FINAL
+  round     Int
+  picks     RoundTeamPick[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([phase, round])
+}
+
+model RoundTeamPick {
+  id          String    @id @default(cuid())
+  roundTeamId String
+  roundTeam   RoundTeam @relation(fields: [roundTeamId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  isMvp       Boolean   @default(false) // craque da rodada
+
+  @@unique([roundTeamId, playerId])
 }
 
 model Match {

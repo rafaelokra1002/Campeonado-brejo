@@ -10,6 +10,7 @@ import Teams from "./pages/Teams.jsx";
 import TeamDetail from "./pages/TeamDetail.jsx";
 import PlayerDetail from "./pages/PlayerDetail.jsx";
 import Scorers from "./pages/Scorers.jsx";
+import RoundTeam from "./pages/RoundTeam.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
 
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/times/:id" element={<TeamDetail />} />
         <Route path="/jogadores/:id" element={<PlayerDetail />} />
         <Route path="/artilharia" element={<Scorers />} />
+        <Route path="/selecao" element={<RoundTeam />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Private><Admin /></Private>} />
         <Route path="*" element={<Navigate to="/" replace />} />
