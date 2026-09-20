@@ -3,6 +3,7 @@ import { api } from "../api/client.js";
 import { Loader, EmptyState } from "../components/ui.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import ShareStandingsButton from "../components/ShareStandings.jsx";
+import RulesCard from "../components/RulesCard.jsx";
 
 export default function Standings() {
   const { data, loading } = usePolling(() => api.standingsByGroup(), { interval: 20000 });
@@ -34,6 +35,8 @@ export default function Standings() {
           <StandingsTable rows={data[g]} promotion={4} relegation={1} />
         </section>
       ))}
+
+      <RulesCard />
     </div>
   );
 }

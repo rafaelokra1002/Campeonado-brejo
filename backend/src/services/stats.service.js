@@ -6,6 +6,11 @@ export async function computeStandings() {
   const matches = await prisma.match.findMany({
     where: { status: "FINISHED", phase: "GROUP" },
   });
+  // Cartões da fase de grupos (usados como critério de desempate).
+  const cards = await prisma.card.findMany({
+    where: { match: { status: "FINISHED", phase: "GROUP" } },
+    select: { teamId: true, type: true },
+  });
 
   const table = new Map();
   for (const t of teams) {
@@ -24,8 +29,17 @@ export async function computeStandings() {
       goalsFor: 0,
       goalsAgainst: 0,
       goalDiff: 0,
+      redCards: 0,
+      yellowCards: 0,
       form: [], // últimos resultados: V/E/D
     });
+  }
+
+  for (const c of cards) {
+    const row = table.get(c.teamId);
+    if (!row) continue;
+    if (c.type === "RED") row.redCards++;
+    else row.yellowCards++;
   }
 
   for (const m of matches) {
@@ -68,14 +82,6 @@ export async function computeStandings() {
     form: row.form.slice(-5),
   }));
 
-  // Critérios: pontos > saldo > gols pró > vitórias > nome
-  const byRank = (a, b) =>
-    b.points - a.points ||
-    b.goalDiff - a.goalDiff ||
-    b.goalsFor - a.goalsFor ||
-    b.wins - a.wins ||
-    a.name.localeCompare(b.name);
-
   // Ordena e numera a posição DENTRO de cada grupo.
   const groups = new Map();
   for (const row of standings) {
@@ -85,10 +91,66 @@ export async function computeStandings() {
 
   const result = [];
   for (const key of [...groups.keys()].sort()) {
-    const rows = groups.get(key).sort(byRank).map((row, i) => ({ ...row, position: i + 1 }));
+    const rows = sortByTiebreak(groups.get(key), matches).map((row, i) => ({ ...row, position: i + 1 }));
     result.push(...rows);
   }
   return result;
+}
+
+// Critérios de desempate do regulamento, nesta ordem:
+// pontos > vitórias > saldo de gols > gols marcados > confronto direto >
+// menos cartões vermelhos > menos cartões amarelos > (sorteio, que é manual:
+// aqui cai na ordem alfabética só pra ficar estável).
+function sortByTiebreak(rows, matches) {
+  const main = (a, b) =>
+    b.points - a.points || b.wins - a.wins || b.goalDiff - a.goalDiff || b.goalsFor - a.goalsFor;
+
+  const sorted = [...rows].sort(main);
+  const result = [];
+  for (let i = 0; i < sorted.length; ) {
+    let j = i + 1;
+    while (j < sorted.length && main(sorted[i], sorted[j]) === 0) j++;
+    const tied = sorted.slice(i, j);
+    result.push(...(tied.length > 1 ? breakTie(tied, matches) : tied));
+    i = j;
+  }
+  return result;
+}
+
+// Desempate entre times empatados nos critérios principais: mini-tabela só com
+// os jogos entre eles (confronto direto), depois cartões.
+function breakTie(tied, matches) {
+  const ids = new Set(tied.map((t) => t.teamId));
+  const mini = new Map(tied.map((t) => [t.teamId, { points: 0, gd: 0, gf: 0 }]));
+
+  for (const m of matches) {
+    if (!ids.has(m.homeTeamId) || !ids.has(m.awayTeamId)) continue;
+    const home = mini.get(m.homeTeamId);
+    const away = mini.get(m.awayTeamId);
+    home.gf += m.homeScore;
+    home.gd += m.homeScore - m.awayScore;
+    away.gf += m.awayScore;
+    away.gd += m.awayScore - m.homeScore;
+    if (m.homeScore > m.awayScore) home.points += 3;
+    else if (m.homeScore < m.awayScore) away.points += 3;
+    else {
+      home.points++;
+      away.points++;
+    }
+  }
+
+  return [...tied].sort((a, b) => {
+    const ma = mini.get(a.teamId);
+    const mb = mini.get(b.teamId);
+    return (
+      mb.points - ma.points ||
+      mb.gd - ma.gd ||
+      mb.gf - ma.gf ||
+      a.redCards - b.redCards ||
+      a.yellowCards - b.yellowCards ||
+      a.name.localeCompare(b.name)
+    );
+  });
 }
 
 // Classificação agrupada: { A: [...], B: [...] }

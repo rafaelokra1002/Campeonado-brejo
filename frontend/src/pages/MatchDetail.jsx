@@ -3,6 +3,7 @@ import { useState } from "react";
 import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx";
+import RulesCard from "../components/RulesCard.jsx";
 import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel } from "../lib/format.js";
 
 export default function MatchDetail() {
@@ -101,6 +102,8 @@ export default function MatchDetail() {
           </div>
         </div>
       )}
+
+      <RulesCard />
     </div>
   );
 }
