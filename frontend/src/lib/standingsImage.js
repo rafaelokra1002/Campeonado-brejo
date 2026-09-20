@@ -1,7 +1,17 @@
-import { resolveCrestUrl } from "../api/client.js";
+import {
+  C,
+  FONT,
+  ensureFonts,
+  loadImage,
+  loadCrestImage,
+  roundRectPath,
+  fitText,
+  drawCrest,
+  formatToday,
+  canvasToFiles,
+} from "./canvasShare.js";
 
-// Gera a imagem (PNG) e o PDF da classificação direto no navegador, desenhando
-// num canvas. Não depende de bibliotecas externas.
+// Imagem (PNG) e PDF da classificação, desenhados num canvas.
 
 const W = 1200;
 const PAD = 48;
@@ -9,18 +19,6 @@ const SCALE = 2;
 const HEADER_H = 190;
 const ROW_H = 68;
 const HEAD_ROW_H = 56;
-
-const C = {
-  bg: "#0a0f1a",
-  card: "#0d1424",
-  head: "#131c30",
-  line: "rgba(255,255,255,0.07)",
-  text: "#f1f5f9",
-  muted: "#94a3b8",
-  brand: "#4ade80",
-  green: "#22c55e",
-  red: "#ef4444",
-};
 
 // [rótulo, centro x, chave]
 const COLS = [
@@ -34,111 +32,12 @@ const COLS = [
   ["SG", 1110, "goalDiff"],
 ];
 
-const FONT = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif';
-
-function loadImage(src) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    const timer = setTimeout(() => resolve(null), 7000);
-    img.onload = () => { clearTimeout(timer); resolve(img); };
-    img.onerror = () => { clearTimeout(timer); resolve(null); };
-    img.src = src;
-  });
-}
-
-function isImageCrest(crest) {
-  return !!crest && (/^https?:\/\//.test(crest) || crest.startsWith("/"));
-}
-
-// O parâmetro evita reaproveitar do cache do navegador uma resposta carregada
-// sem CORS (o que "suja" o canvas e impede exportar a imagem).
-function crestImage(row) {
-  if (!isImageCrest(row.crest)) return Promise.resolve(null);
-  const url = resolveCrestUrl(row.crest);
-  return loadImage(`${url}${url.includes("?") ? "&" : "?"}cors=1`);
-}
-
-// Espera a fonte carregar, mas no máximo 2,5s (com internet lenta segue com a
-// fonte do sistema em vez de travar o botão).
-async function ensureFonts() {
-  try {
-    await Promise.race([
-      Promise.all([
-        document.fonts.load(`900 40px Inter`),
-        document.fonts.load(`700 26px Inter`),
-        document.fonts.load(`400 22px Inter`),
-      ]),
-      new Promise((resolve) => setTimeout(resolve, 2500)),
-    ]);
-  } catch {
-    // segue com a fonte de sistema
-  }
-}
-
-function roundRectPath(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function fitText(ctx, text, maxWidth) {
-  if (ctx.measureText(text).width <= maxWidth) return text;
-  let t = text;
-  while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);
-  return `${t}…`;
-}
-
-function drawCrest(ctx, row, img, cx, cy, r) {
-  const color = row.color || C.green;
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.fillStyle = `${color}33`;
-  ctx.fill();
-  ctx.clip();
-  if (img) {
-    // cover
-    const s = Math.max((r * 2) / img.width, (r * 2) / img.height);
-    const w = img.width * s;
-    const h = img.height * s;
-    ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
-  } else if (row.crest && !isImageCrest(row.crest)) {
-    ctx.font = `${r * 1.1}px ${FONT}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = C.text;
-    ctx.fillText(row.crest, cx, cy + 2);
-  } else {
-    ctx.font = `800 ${r * 0.85}px ${FONT}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = color;
-    ctx.fillText((row.shortName || row.name || "?").slice(0, 2).toUpperCase(), cx, cy + 1);
-  }
-  ctx.restore();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = `${color}88`;
-  ctx.stroke();
-}
-
-function formatToday() {
-  return new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
 export async function renderStandingsCanvas(standingsByGroup) {
   await ensureFonts();
 
   const groups = Object.keys(standingsByGroup).sort();
   const allRows = groups.flatMap((g) => standingsByGroup[g]);
-  const [logo, ...crestImgs] = await Promise.all([loadImage("/logo-192.png"), ...allRows.map(crestImage)]);
+  const [logo, ...crestImgs] = await Promise.all([loadImage("/logo-192.png"), ...allRows.map((r) => loadCrestImage(r.crest))]);
   const imgByTeam = new Map(allRows.map((row, i) => [row.teamId, crestImgs[i]]));
 
   const groupsH = groups.reduce(
@@ -297,55 +196,7 @@ export async function renderStandingsCanvas(standingsByGroup) {
   return canvas;
 }
 
-export function canvasToBlob(canvas, type = "image/png", quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Não foi possível gerar a imagem."))), type, quality);
-  });
-}
-
-// PDF de uma página só, com a imagem (JPEG) ocupando a página inteira.
-export function buildPdfBlob(jpegBytes, imgW, imgH) {
-  const pageW = 595.28;
-  const pageH = Number(((pageW * imgH) / imgW).toFixed(2));
-  const enc = new TextEncoder();
-  const chunks = [];
-  const offsets = [];
-  let offset = 0;
-
-  const push = (data) => {
-    const bytes = typeof data === "string" ? enc.encode(data) : data;
-    chunks.push(bytes);
-    offset += bytes.length;
-  };
-  const obj = (n, body) => {
-    offsets[n] = offset;
-    push(`${n} 0 obj\n${body}\nendobj\n`);
-  };
-
-  push("%PDF-1.4\n");
-  obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
-  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
-  offsets[4] = offset;
-  push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
-  push(jpegBytes);
-  push("\nendstream\nendobj\n");
-  const content = `q ${pageW} 0 0 ${pageH} 0 0 cm /Im0 Do Q`;
-  obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-
-  const xrefOffset = offset;
-  let xref = "xref\n0 6\n0000000000 65535 f \n";
-  for (let i = 1; i <= 5; i++) xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
-  push(`${xref}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
-
-  return new Blob(chunks, { type: "application/pdf" });
-}
-
 // Gera tudo de uma vez: { png, pdf, width, height }
 export async function buildStandingsFiles(standingsByGroup) {
-  const canvas = await renderStandingsCanvas(standingsByGroup);
-  const png = await canvasToBlob(canvas, "image/png");
-  const jpeg = await canvasToBlob(canvas, "image/jpeg", 0.92);
-  const pdf = buildPdfBlob(new Uint8Array(await jpeg.arrayBuffer()), canvas.width, canvas.height);
-  return { png, pdf, width: canvas.width, height: canvas.height };
+  return canvasToFiles(await renderStandingsCanvas(standingsByGroup));
 }

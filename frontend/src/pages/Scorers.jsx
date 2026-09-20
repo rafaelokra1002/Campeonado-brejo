@@ -4,6 +4,8 @@ import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.jsx";
 import { teamFirstName } from "../lib/format.js";
+import ShareFilesButton from "../components/ShareFiles.jsx";
+import { buildScorersFiles, buildCardsFiles } from "../lib/rankingImage.js";
 
 export default function Scorers() {
   const [tab, setTab] = useState("goals"); // goals | cards
@@ -46,6 +48,19 @@ function GoalsRanking() {
 
   return (
     <>
+      <div className="flex justify-end">
+        <ShareFilesButton
+          className="btn-primary text-sm"
+          modalTitle="Compartilhar artilharia"
+          shareTitle="Artilharia · Campeonato Brejolandense"
+          filenameBase="artilharia-brejolandense"
+          loadingLabel="Gerando a imagem da artilharia..."
+          getFiles={() => buildScorersFiles(data)}
+        >
+          📱 Compartilhar
+        </ShareFilesButton>
+      </div>
+
       {/* Destaque do artilheiro */}
       <Link to={`/jogadores/${top.playerId}`} className="card p-6 flex items-center gap-4 bg-gradient-to-r from-brand/10 to-transparent border-brand/30">
         <div className="text-4xl">👑</div>
@@ -89,6 +104,19 @@ function CardsRanking() {
   if (!data?.length) return <EmptyState icon="🟨" title="Nenhum cartão registrado ainda" />;
 
   return (
+    <>
+    <div className="flex justify-end">
+      <ShareFilesButton
+        className="btn-primary text-sm"
+        modalTitle="Compartilhar cartões"
+        shareTitle="Cartões · Campeonato Brejolandense"
+        filenameBase="cartoes-brejolandense"
+        loadingLabel="Gerando a imagem dos cartões..."
+        getFiles={() => buildCardsFiles(data)}
+      >
+        📱 Compartilhar
+      </ShareFilesButton>
+    </div>
     <div className="card divide-y divide-white/5">
       {data.map((s) => (
         <Link key={s.playerId} to={`/jogadores/${s.playerId}`} className="flex items-center gap-3 p-3 hover:bg-white/5 transition">
@@ -105,5 +133,6 @@ function CardsRanking() {
         </Link>
       ))}
     </div>
+    </>
   );
 }

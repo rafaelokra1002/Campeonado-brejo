@@ -5,6 +5,8 @@ import { api } from "../api/client.js";
 import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx";
 import RulesCard from "../components/RulesCard.jsx";
 import LiveControl from "../components/admin/LiveControl.jsx";
+import ShareFilesButton from "../components/ShareFiles.jsx";
+import { buildMatchFiles } from "../lib/matchImage.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel, teamFirstName } from "../lib/format.js";
 
@@ -51,13 +53,19 @@ export default function MatchDetail() {
           {match.venue && <div>📍 {match.venue}</div>}
         </div>
 
-        {showScore && (
-          <div className="flex justify-center mt-5">
-            <button onClick={() => shareWhatsApp(match)} className="btn-primary text-sm">
-              📱 Compartilhar no WhatsApp
-            </button>
-          </div>
-        )}
+        <div className="flex justify-center mt-5">
+          <ShareFilesButton
+            className="btn-primary text-sm"
+            modalTitle="Compartilhar jogo"
+            shareTitle={`${match.homeTeam.name} x ${match.awayTeam.name}`}
+            filenameBase={`jogo-${teamFirstName(match.homeTeam.name)}-x-${teamFirstName(match.awayTeam.name)}`.toLowerCase()}
+            loadingLabel="Gerando a imagem do jogo..."
+            getFiles={() => buildMatchFiles(match)}
+            onText={showScore ? () => shareWhatsApp(match) : undefined}
+          >
+            📱 Compartilhar
+          </ShareFilesButton>
+        </div>
 
         {/* Só aparece pro admin logado: atalho pra lançar/editar gols, cartões e status */}
         {user && (
