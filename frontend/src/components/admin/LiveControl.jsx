@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client.js";
 import Modal from "./Modal.jsx";
 import { TeamBadge } from "../ui.jsx";
+import { matchStageLabel } from "../../lib/format.js";
 
 // Painel de controle da partida em tempo real: status, placar, gols e cartões.
 export default function LiveControl({ matchId, onClose }) {
@@ -26,7 +27,7 @@ export default function LiveControl({ matchId, onClose }) {
   if (!match) return <Modal open title="Carregando..." onClose={onClose}><div className="py-6 text-center text-gray-500">...</div></Modal>;
 
   return (
-    <Modal open title={`Ao vivo · Rodada ${match.round}`} onClose={onClose}
+    <Modal open title={`Gols e cartões · ${matchStageLabel(match)}`} onClose={onClose}
       footer={<button onClick={onClose} className="btn-primary">Concluir</button>}>
       {/* Placar */}
       <div className="grid grid-cols-3 items-center gap-2 mb-4">
@@ -151,12 +152,10 @@ function EventRow({ icon, event, teamId, showType, onSave, onRemove, busy }) {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-1.5">
-      <span>{icon} {event.minute ? `${event.minute}'` : ""} {event.player?.name || "—"} ({event.team.shortName})</span>
-      <div className="ml-auto flex items-center gap-3">
-        <button disabled={busy} onClick={() => setEditing(true)} className="text-brand-400 text-xs">editar</button>
-        <button disabled={busy} onClick={onRemove} className="text-red-400 text-xs">remover</button>
-      </div>
+    <div className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-2">
+      <span className="min-w-0 flex-1">{icon} {event.minute ? `${event.minute}'` : ""} {event.player?.name || "—"} ({event.team.shortName})</span>
+      <button disabled={busy} onClick={() => setEditing(true)} className="shrink-0 text-brand-400 text-xs font-semibold px-3 py-2 rounded-lg bg-brand/10">Editar</button>
+      <button disabled={busy} onClick={onRemove} className="shrink-0 text-red-400 text-xs font-semibold px-3 py-2 rounded-lg bg-red-500/10">Remover</button>
     </div>
   );
 }

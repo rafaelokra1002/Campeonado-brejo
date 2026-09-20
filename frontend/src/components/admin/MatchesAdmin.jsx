@@ -77,16 +77,20 @@ export default function MatchesAdmin() {
 
       <div className="space-y-2">
         {filtered.map((m) => (
-          <div key={m.id} className="card p-3 flex items-center gap-3 flex-wrap">
-            <span className="badge bg-white/5 text-gray-400">{matchStageLabel(m)}</span>
-            <div className="flex-1 min-w-0 font-semibold text-sm">
-              {m.homeTeam.shortName} <span className="text-brand-400">{m.homeScore} × {m.awayScore}</span> {m.awayTeam.shortName}
-              <div className="text-xs text-gray-500 font-normal">{formatDateTime(m.kickoff)}</div>
+          <div key={m.id} className="card p-3 space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="badge bg-white/5 text-gray-400">{matchStageLabel(m)}</span>
+              <StatusBadge status={m.status} minute={m.minute} />
+              <span className="ml-auto text-xs text-gray-500">{formatDateTime(m.kickoff)}</span>
             </div>
-            <StatusBadge status={m.status} minute={m.minute} />
-            <button onClick={() => setLiveMatch(m)} className="btn-primary text-xs py-1.5 px-2.5">Ao vivo</button>
-            <button onClick={() => openEdit(m)} className="btn-ghost text-xs py-1.5 px-2.5">Editar</button>
-            <button onClick={() => remove(m.id)} className="btn-danger text-xs py-1.5 px-2.5">Excluir</button>
+            <div className="font-semibold text-sm">
+              {m.homeTeam.name} <span className="text-brand-400 whitespace-nowrap">{m.homeScore} × {m.awayScore}</span> {m.awayTeam.name}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setLiveMatch(m)} className="btn-primary text-sm py-2 px-3 flex-1">⚽ Gols e cartões</button>
+              <button onClick={() => openEdit(m)} className="btn-ghost text-sm py-2 px-3" title="Rodada, times, data, local e status">Dados</button>
+              <button onClick={() => remove(m.id)} className="btn-danger text-sm py-2 px-3">Excluir</button>
+            </div>
           </div>
         ))}
       </div>
