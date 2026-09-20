@@ -75,6 +75,20 @@ export function shareWhatsApp(match) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
+// Compartilhar os jogos de uma rodada/fase no WhatsApp, em formato de texto.
+export function shareRoundText(title, matches) {
+  const lines = [`⚽ ${title} · Campeonato Brejolandense`, ""];
+  for (const m of matches) {
+    const home = teamFirstName(m.homeTeam.name);
+    const away = teamFirstName(m.awayTeam.name);
+    const score = m.status === "SCHEDULED" ? "x" : `${m.homeScore} x ${m.awayScore}`;
+    const when = `${new Date(m.kickoff).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${formatTime(m.kickoff)}`;
+    lines.push(`${home} ${score} ${away} · ${when}${m.status === "LIVE" ? " (AO VIVO)" : ""}`);
+  }
+  lines.push("", `${window.location.origin}/jogos`);
+  window.open(`https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
+}
+
 // Compartilhar a classificação (por grupo) no WhatsApp, em formato de texto.
 export function shareStandings(standingsByGroup) {
   const groups = Object.keys(standingsByGroup).sort();

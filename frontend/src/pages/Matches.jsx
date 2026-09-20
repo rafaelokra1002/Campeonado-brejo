@@ -4,7 +4,9 @@ import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle } from "../components/ui.jsx";
 import MatchCard from "../components/MatchCard.jsx";
 import AdBanner from "../components/AdBanner.jsx";
-import { PHASES } from "../lib/format.js";
+import { PHASES, phaseLabel, shareRoundText } from "../lib/format.js";
+import ShareFilesButton from "../components/ShareFiles.jsx";
+import { buildRoundFiles } from "../lib/roundImage.js";
 
 const FILTERS = [
   { key: "", label: "Todos" },
@@ -94,17 +96,43 @@ export default function Matches() {
       ) : phase === "GROUP" ? (
         Object.entries(grouped).map(([r, matches]) => (
           <div key={r} className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide pt-2">Rodada {r}</h3>
+            <div className="flex items-center justify-between pt-2">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Rodada {r}</h3>
+              <ShareRound title={`Rodada ${r}`} filenameBase={`rodada-${r}-brejolandense`} matches={matches} />
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {matches.map((m) => <MatchCard key={m.id} match={m} />)}
             </div>
           </div>
         ))
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {data.map((m) => <MatchCard key={m.id} match={m} />)}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between pt-2">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">{phaseLabel(phase)}</h3>
+            <ShareRound title={phaseLabel(phase)} filenameBase={`${phase.toLowerCase()}-brejolandense`} matches={data} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {data.map((m) => <MatchCard key={m.id} match={m} />)}
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+// Botão de compartilhar uma rodada (ou fase do mata-mata) como imagem, PDF ou texto.
+function ShareRound({ title, filenameBase, matches }) {
+  return (
+    <ShareFilesButton
+      className="text-sm text-brand-400 font-semibold"
+      modalTitle={`Compartilhar ${title.toLowerCase()}`}
+      shareTitle={`${title} · Campeonato Brejolandense`}
+      filenameBase={filenameBase}
+      loadingLabel="Gerando a imagem da rodada..."
+      getFiles={() => buildRoundFiles({ title, matches })}
+      onText={() => shareRoundText(title, matches)}
+    >
+      📱 Compartilhar
+    </ShareFilesButton>
   );
 }
