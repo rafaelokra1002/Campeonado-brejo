@@ -21,6 +21,7 @@ const updateSchema = z.object({
   organizerName: z.string().max(80).optional(),
   bannerImage: z.string().optional().nullable(),
   streamUrl: z.string().max(300).optional().nullable(),
+  whatsappUrl: z.string().max(300).optional().nullable(),
 });
 
 export const update = asyncHandler(async (req, res) => {

@@ -73,7 +73,8 @@ model RoundTeamPick {
   roundTeam   RoundTeam @relation(fields: [roundTeamId], references: [id], onDelete: Cascade)
   playerId    String
   player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  isMvp       Boolean   @default(false) // craque da rodada
+  isMvp       Boolean   @default(false) // craque da rodada (escolha do admin)
+  votes       Int       @default(0) // votos da torcida no craque da rodada
 
   @@unique([roundTeamId, playerId])
 }
@@ -98,8 +99,9 @@ model Match {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  goals Goal[]
-  cards Card[]
+  goals       Goal[]
+  cards       Card[]
+  predictions Prediction[]
 }
 
 model Goal {
@@ -149,4 +151,37 @@ model Settings {
   bannerImage   String? // foto de capa da home (upload via /api/upload)
   followers     Int     @default(0)
   streamUrl     String? // link da transmissão ao vivo no YouTube
+  whatsappUrl   String? // link do canal/grupo de WhatsApp do campeonato
+}
+
+// Dispositivos que ativaram as notificações (Web Push).
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+// Participante do bolão de palpites (sem cadastro: apelido + chave guardada no aparelho).
+model Predictor {
+  id          String   @id @default(cuid())
+  nickname    String
+  nicknameKey String   @unique // apelido em minúsculas, pra não repetir
+  token       String // chave secreta do aparelho
+  createdAt   DateTime @default(now())
+
+  predictions Prediction[]
+}
+
+model Prediction {
+  id          String    @id @default(cuid())
+  matchId     String
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  predictorId String
+  predictor   Predictor @relation(fields: [predictorId], references: [id], onDelete: Cascade)
+  choice      String // HOME | DRAW | AWAY
+  createdAt   DateTime  @default(now())
+
+  @@unique([matchId, predictorId])
 }

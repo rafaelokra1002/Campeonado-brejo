@@ -12,7 +12,7 @@ export default function SettingsAdmin() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    api.settings().then((s) => setForm({ organizerName: s.organizerName || "", bannerImage: s.bannerImage || "", streamUrl: s.streamUrl || "" }));
+    api.settings().then((s) => setForm({ organizerName: s.organizerName || "", bannerImage: s.bannerImage || "", streamUrl: s.streamUrl || "", whatsappUrl: s.whatsappUrl || "" }));
   }, []);
 
   async function handleFile(e) {
@@ -87,6 +87,20 @@ export default function SettingsAdmin() {
         />
         <p className="text-xs text-gray-500 mt-1.5">
           Cole o link do vídeo/live do YouTube. Deixe em branco pra esconder essa parte do site.
+        </p>
+      </div>
+
+      <div>
+        <h2 className="font-bold mb-1 mt-2">Canal do WhatsApp</h2>
+        <label className="label">Link do canal ou grupo</label>
+        <input
+          className="input"
+          value={form.whatsappUrl}
+          onChange={(e) => setForm({ ...form, whatsappUrl: e.target.value })}
+          placeholder="https://whatsapp.com/channel/... ou https://chat.whatsapp.com/..."
+        />
+        <p className="text-xs text-gray-500 mt-1.5">
+          Aparece na Home como botão "Canal do WhatsApp". Deixe em branco pra esconder.
         </p>
       </div>
 

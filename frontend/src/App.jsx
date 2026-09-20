@@ -11,6 +11,7 @@ import TeamDetail from "./pages/TeamDetail.jsx";
 import PlayerDetail from "./pages/PlayerDetail.jsx";
 import Scorers from "./pages/Scorers.jsx";
 import RoundTeam from "./pages/RoundTeam.jsx";
+import Bolao from "./pages/Bolao.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
 
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/jogadores/:id" element={<PlayerDetail />} />
         <Route path="/artilharia" element={<Scorers />} />
         <Route path="/selecao" element={<RoundTeam />} />
+        <Route path="/bolao" element={<Bolao />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Private><Admin /></Private>} />
         <Route path="*" element={<Navigate to="/" replace />} />

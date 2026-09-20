@@ -10,6 +10,8 @@ import * as stats from "../controllers/stats.controller.js";
 import * as ads from "../controllers/ad.controller.js";
 import * as settings from "../controllers/settings.controller.js";
 import * as roundTeams from "../controllers/roundTeam.controller.js";
+import * as push from "../controllers/push.controller.js";
+import * as bolao from "../controllers/bolao.controller.js";
 import { uploadImage } from "../controllers/upload.controller.js";
 
 const router = Router();
@@ -38,6 +40,14 @@ router.post("/matches/:id/vote", matches.vote);
 router.get("/ads", ads.list);
 
 router.get("/round-teams", roundTeams.list);
+router.post("/round-teams/picks/:pickId/vote", roundTeams.votePick);
+
+router.get("/push/public-key", push.publicKey);
+router.post("/push/subscribe", push.subscribe);
+router.post("/push/unsubscribe", push.unsubscribe);
+
+router.get("/bolao", bolao.ranking);
+router.post("/bolao/register", bolao.register);
 
 router.get("/settings", settings.get);
 router.post("/settings/follow", settings.follow);

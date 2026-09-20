@@ -55,16 +55,36 @@ export const save = asyncHandler(async (req, res) => {
       update: {},
       create: { phase, round },
     });
+    // Guarda os votos da torcida dos jogadores que continuam na seleção.
+    const previous = await tx.roundTeamPick.findMany({ where: { roundTeamId: roundTeam.id } });
+    const votesByPlayer = new Map(previous.map((p) => [p.playerId, p.votes]));
     await tx.roundTeamPick.deleteMany({ where: { roundTeamId: roundTeam.id } });
     if (picks.length) {
       await tx.roundTeamPick.createMany({
-        data: picks.map((p) => ({ roundTeamId: roundTeam.id, playerId: p.playerId, isMvp: !!p.isMvp })),
+        data: picks.map((p) => ({
+          roundTeamId: roundTeam.id,
+          playerId: p.playerId,
+          isMvp: !!p.isMvp,
+          votes: votesByPlayer.get(p.playerId) ?? 0,
+        })),
       });
     }
     return tx.roundTeam.findUnique({ where: { id: roundTeam.id }, include });
   });
 
   res.json(saved);
+});
+
+// Voto da torcida no craque da rodada (aberto, um voto por aparelho controlado no front).
+export const votePick = asyncHandler(async (req, res) => {
+  const pick = await prisma.roundTeamPick
+    .update({ where: { id: req.params.pickId }, data: { votes: { increment: 1 } }, select: { id: true, votes: true } })
+    .catch((e) => {
+      if (e.code === "P2025") return null;
+      throw e;
+    });
+  if (!pick) return res.status(404).json({ error: "Jogador não encontrado na seleção." });
+  res.json(pick);
 });
 
 export const remove = asyncHandler(async (req, res) => {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { asyncHandler } from "../middleware/error.js";
+import { notifyStatusChange, notifyGoal } from "../lib/matchNotify.js";
 
 const matchInclude = {
   homeTeam: { select: { id: true, name: true, shortName: true, crest: true, color: true } },
@@ -96,11 +97,13 @@ export const create = asyncHandler(async (req, res) => {
 
 export const update = asyncHandler(async (req, res) => {
   const data = matchSchema.partial().parse(req.body);
+  const before = await prisma.match.findUnique({ where: { id: req.params.id }, select: { status: true } });
   const match = await prisma.match.update({
     where: { id: req.params.id },
     data,
     include: matchInclude,
   });
+  if (before) notifyStatusChange(before.status, match);
   res.json(match);
 });
 
@@ -119,19 +122,25 @@ const scoreSchema = z.object({
 
 export const updateScore = asyncHandler(async (req, res) => {
   const data = scoreSchema.parse(req.body);
+  const before = await prisma.match.findUnique({ where: { id: req.params.id }, select: { status: true } });
   const match = await prisma.match.update({
     where: { id: req.params.id },
     data,
     include: detailInclude,
   });
+  if (before) notifyStatusChange(before.status, match);
   res.json(match);
 });
 
 // ---- Enquete "quem vence" ----
-const voteSchema = z.object({ choice: z.enum(["HOME", "DRAW", "AWAY"]) });
+const voteSchema = z.object({
+  choice: z.enum(["HOME", "DRAW", "AWAY"]),
+  // opcional: participante do bolão (apelido registrado), pro palpite valer no ranking
+  predictor: z.object({ id: z.string().min(1), token: z.string().min(1) }).optional(),
+});
 
 export const vote = asyncHandler(async (req, res) => {
-  const { choice } = voteSchema.parse(req.body);
+  const { choice, predictor } = voteSchema.parse(req.body);
   const match = await prisma.match.findUnique({ where: { id: req.params.id } });
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
   if (match.status !== "SCHEDULED") {
@@ -139,12 +148,28 @@ export const vote = asyncHandler(async (req, res) => {
   }
 
   const field = choice === "HOME" ? "votesHome" : choice === "AWAY" ? "votesAway" : "votesDraw";
-  const updated = await prisma.match.update({
+  const bump = prisma.match.update({
     where: { id: req.params.id },
     data: { [field]: { increment: 1 } },
     include: matchInclude,
   });
-  res.json(updated);
+
+  if (!predictor) return res.json(await bump);
+
+  const owner = await prisma.predictor.findUnique({ where: { id: predictor.id } });
+  if (!owner || owner.token !== predictor.token) {
+    return res.status(401).json({ error: "Apelido do bolão inválido. Cadastre-se de novo." });
+  }
+  try {
+    const [, updated] = await prisma.$transaction([
+      prisma.prediction.create({ data: { matchId: match.id, predictorId: owner.id, choice } }),
+      bump,
+    ]);
+    res.json(updated);
+  } catch (e) {
+    if (e.code === "P2002") return res.status(409).json({ error: "Você já palpitou nesse jogo." });
+    throw e;
+  }
 });
 
 // ---- Gols ----
@@ -192,6 +217,12 @@ export const addGoal = asyncHandler(async (req, res) => {
   }
 
   const updated = await prisma.match.findUnique({ where: { id: matchId }, include: detailInclude });
+  if (updated) {
+    const scorer = data.playerId
+      ? await prisma.player.findUnique({ where: { id: data.playerId }, select: { name: true } })
+      : null;
+    notifyGoal(updated, scorer?.name);
+  }
   res.status(201).json(updated);
 });
 

@@ -6,6 +6,8 @@ import { Loader, EmptyState, TeamBadge, StatusBadge } from "../components/ui.jsx
 import RulesCard from "../components/RulesCard.jsx";
 import LiveControl from "../components/admin/LiveControl.jsx";
 import ShareFilesButton from "../components/ShareFiles.jsx";
+import BolaoJoin from "../components/BolaoJoin.jsx";
+import { usePredictor } from "../hooks/usePredictor.js";
 import { buildMatchFiles } from "../lib/matchImage.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatDate, formatDateTime, shareWhatsApp, matchStageLabel, teamFirstName } from "../lib/format.js";
@@ -144,6 +146,8 @@ function VotePoll({ match, onVoted }) {
     }
   });
   const [voting, setVoting] = useState(false);
+  const [error, setError] = useState("");
+  const { predictor, register, clear } = usePredictor();
 
   const total = match.votesHome + match.votesDraw + match.votesAway;
   const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
@@ -151,13 +155,19 @@ function VotePoll({ match, onVoted }) {
   async function handleVote(choice) {
     if (voted || voting) return;
     setVoting(true);
+    setError("");
     try {
-      await api.voteMatch(match.id, choice);
+      await api.voteMatch(match.id, choice, predictor ? { id: predictor.id, token: predictor.token } : undefined);
       try { localStorage.setItem(`brejo_vote_${match.id}`, choice); } catch { /* modo privado etc. */ }
       setVoted(choice);
       onVoted();
-    } catch {
-      // votação pode ter encerrado nesse meio tempo; ignora
+    } catch (e) {
+      if (e.status === 401) {
+        clear();
+        setError("Não reconheci seu apelido do bolão. Entre de novo e vote outra vez.");
+      } else {
+        setError(e.message || "Não foi possível registrar seu voto.");
+      }
     } finally {
       setVoting(false);
     }
@@ -166,6 +176,23 @@ function VotePoll({ match, onVoted }) {
   return (
     <div className="card p-5">
       <h3 className="font-bold mb-4">🔮 Quem vence?</h3>
+
+      {(!voted || predictor) && (
+        <div className="mb-4 rounded-xl bg-white/5 p-3 text-xs">
+          {predictor ? (
+            <span className="text-gray-300">
+              🎲 Seu palpite vale no <Link to="/bolao" className="text-brand-400 font-semibold">bolão</Link> como{" "}
+              <span className="font-bold text-white">{predictor.nickname}</span>
+            </span>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-gray-300">🎲 Quer que seu palpite valha no ranking do bolão? Escolha um apelido:</div>
+              <BolaoJoin onRegister={register} />
+            </div>
+          )}
+        </div>
+      )}
+      {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
       <div className="space-y-2">
         {["HOME", "DRAW", "AWAY"].map((choice) => {
           const count = choice === "HOME" ? match.votesHome : choice === "AWAY" ? match.votesAway : match.votesDraw;

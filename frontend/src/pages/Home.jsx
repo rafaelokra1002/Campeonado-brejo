@@ -6,6 +6,7 @@ import { Loader, EmptyState, SectionTitle, TeamBadge } from "../components/ui.js
 import { teamFirstName, matchStageLabel } from "../lib/format.js";
 import ShareStandingsButton from "../components/ShareStandings.jsx";
 import RoundTeamPitch from "../components/RoundTeamPitch.jsx";
+import CommunityCard from "../components/CommunityCard.jsx";
 import MatchCard from "../components/MatchCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import AdBanner from "../components/AdBanner.jsx";
@@ -24,6 +25,8 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <HeroBanner />
+
+      <CommunityCard />
 
       <LiveStream />
 
@@ -110,6 +113,8 @@ export default function Home() {
 
       <LatestRoundTeamSection />
 
+      <BolaoSection />
+
       {/* Artilharia */}
       <section>
         <SectionTitle action={<Link to="/artilharia" className="text-sm text-brand-400 font-semibold">Ver ranking</Link>}>
@@ -138,6 +143,37 @@ export default function Home() {
   );
 }
 
+// Top 3 do bolão de palpites (ou convite pra participar enquanto ninguém palpitou).
+function BolaoSection() {
+  const { data } = usePolling(() => api.bolao(), { interval: 60000 });
+  const top = (data || []).slice(0, 3);
+
+  return (
+    <section>
+      <SectionTitle action={<Link to="/bolao" className="text-sm text-brand-400 font-semibold">Ver ranking</Link>}>
+        🎲 Bolão dos palpites
+      </SectionTitle>
+      {top.length ? (
+        <div className="card divide-y divide-white/5">
+          {top.map((row) => (
+            <Link key={row.predictorId} to="/bolao" className="flex items-center gap-3 p-3 hover:bg-white/5 transition">
+              <span className="w-6 text-center font-black text-brand-400">{row.rank}</span>
+              <span className="flex-1 font-semibold truncate">{row.nickname}</span>
+              <span className="text-xl font-black text-brand-400">{row.hits}</span>
+              <span className="text-xs text-gray-500">{row.hits === 1 ? "ponto" : "pontos"}</span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <Link to="/bolao" className="card p-4 flex items-center justify-between gap-3 hover:border-brand/40 transition">
+          <span className="text-sm text-gray-300">Dê seu palpite nos próximos jogos e dispute o ranking com a torcida</span>
+          <span className="text-brand-400 font-semibold text-sm whitespace-nowrap">Participar →</span>
+        </Link>
+      )}
+    </section>
+  );
+}
+
 // Última seleção da rodada divulgada (some se o admin ainda não cadastrou nenhuma).
 function LatestRoundTeamSection() {
   const { data } = usePolling(() => api.roundTeams(), { interval: 30000 });
@@ -146,7 +182,7 @@ function LatestRoundTeamSection() {
 
   return (
     <section>
-      <SectionTitle action={<Link to="/selecao" className="text-sm text-brand-400 font-semibold">Ver todas</Link>}>
+      <SectionTitle action={<Link to="/selecao" className="text-sm text-brand-400 font-semibold">Votar no craque</Link>}>
         ⭐ Seleção · {matchStageLabel(latest)}
       </SectionTitle>
       <RoundTeamPitch picks={latest.picks} />

@@ -3,10 +3,11 @@ import { usePolling } from "../hooks/usePolling.js";
 import { api } from "../api/client.js";
 import { Loader, EmptyState, SectionTitle } from "../components/ui.jsx";
 import RoundTeamPitch from "../components/RoundTeamPitch.jsx";
+import FanVote from "../components/FanVote.jsx";
 import { matchStageLabel } from "../lib/format.js";
 
 export default function RoundTeam() {
-  const { data, loading } = usePolling(() => api.roundTeams(), { interval: 30000 });
+  const { data, loading, refetch } = usePolling(() => api.roundTeams(), { interval: 30000 });
   const [selectedId, setSelectedId] = useState(null);
 
   if (loading && !data) return <Loader />;
@@ -33,6 +34,8 @@ export default function RoundTeam() {
       </div>
 
       <RoundTeamPitch picks={current.picks} />
+
+      <FanVote key={current.id} roundTeam={current} onVoted={() => refetch(true)} />
     </div>
   );
 }
