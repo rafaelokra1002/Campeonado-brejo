@@ -58,8 +58,8 @@ export default function LiveControl({ matchId, onClose }) {
 
       {/* Marcar gol / cartão por time */}
       <div className="grid grid-cols-2 gap-3">
-        <TeamActions match={match} team={match.homeTeam} act={act} matchId={matchId} busy={busy} />
-        <TeamActions match={match} team={match.awayTeam} act={act} matchId={matchId} busy={busy} />
+        <TeamActions match={match} team={match.homeTeam} opponent={match.awayTeam} act={act} matchId={matchId} busy={busy} />
+        <TeamActions match={match} team={match.awayTeam} opponent={match.homeTeam} act={act} matchId={matchId} busy={busy} />
       </div>
 
       {/* Lista de gols: editar (jogador/minuto) ou remover */}
@@ -70,10 +70,14 @@ export default function LiveControl({ matchId, onClose }) {
             {match.goals.map((g) => (
               <EventRow
                 key={g.id}
-                icon="⚽"
+                icon={g.ownGoal ? "🥅" : "⚽"}
                 event={g}
                 teamId={g.teamId}
-                teamName={teamLabel(g.teamId)}
+                teamName={
+                  g.ownGoal
+                    ? `contra, ponto p/ ${teamLabel(g.teamId === match.homeTeam.id ? match.awayTeam.id : match.homeTeam.id)}`
+                    : teamLabel(g.teamId)
+                }
                 onSave={(data) => act(() => api.updateGoal(matchId, g.id, data))}
                 onRemove={() => act(() => api.removeGoal(matchId, g.id))}
                 busy={busy}
@@ -165,7 +169,8 @@ function EventRow({ icon, event, teamId, teamName, showType, onSave, onRemove, b
 }
 
 // Botões de gol/cartão com seleção opcional de jogador e minuto.
-function TeamActions({ match, team, act, matchId, busy }) {
+// "Gol contra": o jogador escolhido (deste time) marcou contra — o ponto vai pro adversário.
+function TeamActions({ match, team, opponent, act, matchId, busy }) {
   const [players, setPlayers] = useState([]);
   const [playerId, setPlayerId] = useState("");
   const [minute, setMinute] = useState("");
@@ -184,6 +189,11 @@ function TeamActions({ match, team, act, matchId, busy }) {
       <input type="number" className="input py-1.5 text-sm" placeholder="Minuto" value={minute} onChange={(e) => setMinute(e.target.value)} />
       <button disabled={busy} onClick={() => act(() => api.addGoal(matchId, { teamId: team.id, playerId: playerId || null, minute: min }))}
         className="btn-primary w-full text-sm py-1.5">⚽ Gol</button>
+      <button disabled={busy} onClick={() => act(() => api.addGoal(matchId, { teamId: team.id, playerId: playerId || null, minute: min, ownGoal: true }))}
+        className="btn-ghost w-full text-sm py-1.5 border border-white/10 leading-tight flex-col gap-0">
+        <span>🥅 Gol contra</span>
+        <span className="text-[10px] font-normal text-gray-400">ponto p/ {teamFirstName(opponent.name)}</span>
+      </button>
       <div className="grid grid-cols-2 gap-2">
         <button disabled={busy} onClick={() => act(() => api.addCard(matchId, { teamId: team.id, playerId: playerId || null, type: "YELLOW", minute: min }))}
           className="btn-ghost text-sm py-1.5">🟨</button>

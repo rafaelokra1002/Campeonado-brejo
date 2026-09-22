@@ -30,12 +30,16 @@ function buildEvents(match) {
   const teamOf = (teamId) => (teamId === match.homeTeam.id ? match.homeTeam : match.awayTeam);
   const events = [];
 
+  const otherTeam = (teamId) => (teamId === match.homeTeam.id ? match.awayTeam : match.homeTeam);
   for (const g of match.goals || []) {
     events.push({
       minute: g.minute,
       kind: "goal",
-      text: `${g.player?.name || "Gol"}${g.penalty ? " (pên.)" : ""}${g.ownGoal ? " (contra)" : ""}`,
-      team: teamFirstName(teamOf(g.teamId).name),
+      text: g.ownGoal
+        ? `${g.player?.name ? `${g.player.name} (contra)` : "Gol contra"}`
+        : `${g.player?.name || "Gol"}${g.penalty ? " (pên.)" : ""}`,
+      // gol contra: mostra o time que ganhou o ponto
+      team: teamFirstName((g.ownGoal ? otherTeam(g.teamId) : teamOf(g.teamId)).name),
     });
   }
   for (const c of match.cards || []) {

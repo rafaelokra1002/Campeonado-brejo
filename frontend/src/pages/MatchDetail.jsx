@@ -236,12 +236,16 @@ function TeamCol({ team }) {
 function buildTimeline(match) {
   const events = [];
   for (const g of match.goals || []) {
-    const side = g.teamId === match.homeTeam.id ? "home" : "away";
+    // Gol contra aparece do lado de quem ganhou o ponto.
+    const playerSide = g.teamId === match.homeTeam.id ? "home" : "away";
+    const side = g.ownGoal ? (playerSide === "home" ? "away" : "home") : playerSide;
     events.push({
       minute: g.minute,
       side,
       icon: g.ownGoal ? "🥅" : "⚽",
-      text: `${g.player?.name || "Gol"}${g.penalty ? " (pên.)" : ""}${g.ownGoal ? " (contra)" : ""}`,
+      text: g.ownGoal
+        ? `${g.player?.name ? `${g.player.name} (contra)` : "Gol contra"}`
+        : `${g.player?.name || "Gol"}${g.penalty ? " (pên.)" : ""}`,
       teamShort: teamFirstName(side === "home" ? match.homeTeam.name : match.awayTeam.name),
     });
   }

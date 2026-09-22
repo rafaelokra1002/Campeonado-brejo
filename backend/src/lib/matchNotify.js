@@ -26,11 +26,14 @@ export function notifyStatusChange(previousStatus, match) {
 }
 
 // Gol durante o jogo (correções em jogo encerrado não avisam ninguém).
-export function notifyGoal(match, scorerName) {
+export function notifyGoal(match, scorerName, ownGoal = false) {
   if (match.status !== "LIVE") return;
+  const body = ownGoal
+    ? scorerName ? `Gol contra de ${scorerName}` : "Gol contra"
+    : scorerName ? `Gol de ${scorerName}` : "Confira os lances";
   notify({
     title: `⚽ GOL! ${scoreLine(match)}`,
-    body: scorerName ? `Gol de ${scorerName}` : "Confira os lances",
+    body,
     url: `/jogos/${match.id}`,
     tag: `match-${match.id}`,
   });

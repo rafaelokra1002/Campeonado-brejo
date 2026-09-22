@@ -221,7 +221,7 @@ export const addGoal = asyncHandler(async (req, res) => {
     const scorer = data.playerId
       ? await prisma.player.findUnique({ where: { id: data.playerId }, select: { name: true } })
       : null;
-    notifyGoal(updated, scorer?.name);
+    notifyGoal(updated, scorer?.name, !!data.ownGoal);
   }
   res.status(201).json(updated);
 });
